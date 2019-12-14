@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import json
 import os
+import random
 
 app = Flask(__name__)
 api = Api(app)
@@ -23,6 +24,14 @@ with open('.config.json', 'r') as file:
 mongo = PyMongo(app)
 
 mhelp = ModelHelpers()
+
+words = open('app/static/words', 'r').readlines()
+
+def create_chain():
+    word = ""
+    for _ in range(3):
+        word += str(random.choice(words)).capitalize().replace('\n', '')
+    return word
 
 def signup_parser():
     parser = reqparse.RequestParser()
@@ -190,8 +199,9 @@ def signup():
         "api_key": str(uuid4()),
     }
     session['access_token'] = access_token
+    
     store = {
-        "name": str(uuid4()),
+        "name": create_chain(),
         "owner": new_user['email'],
         "data": {}
     }

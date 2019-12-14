@@ -1,5 +1,5 @@
 from flask_restful import Resource, reqparse
-from app import mongo, mhelp
+from app import mongo, mhelp, create_chain
 from app.models.helpers import check_token, check_api_key
 from uuid import uuid4
 from flask import session, request
@@ -25,7 +25,7 @@ class Create(Resource):
         if user['store_count'] == 3:
             return {"error": "Reached 3 store maximum!"}, 403
         else:
-            name = str(uuid4())
+            name = create_chain()
             count = user['store_count'] + 1
             mongo.db.stores.insert_one({'name': name, 'owner': user['email'], 'data': data})
             stores = mhelp.get_store_ids({'owner': user['email']})
