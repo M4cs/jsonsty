@@ -22,6 +22,14 @@ def check_token(token):
             pass
     return match
 
+def check_api_key(api_key):
+    from app import mongo
+    user = mongo.db.free_users.find_one({'api_key': api_key})
+    if user.get('_id'):
+        return True
+    else:
+        return False
+
 class ModelHelpers:
     
     @staticmethod

@@ -32,14 +32,14 @@ def signup_parser():
 
 def get_parser():
     parser = reqparse.RequestParser()
-    parser.add_argument('Access-Token', location='headers', required=True)
+    parser.add_argument('Api-Key', location='headers', required=True)
     return parser
     
 
 @app.route('/stores/<store_name>', methods=['GET'])
 def get_store(store_name):
     if session.get('access_token'):
-        user = mhelp.get_user({'current_token': session['access_token']})
+        user = mhelp.get_user({ 'api_key': args['Api-Key']})
         if user:
             stores = mhelp.get_stores({'owner': user['email']})
             requested_store = None
@@ -60,7 +60,8 @@ def get_store(store_name):
 def get_all_api():
     parser = get_parser()
     args = parser.parse_args()
-    user = mhelp.get_user({ 'current_token': args['Access-Token'] })
+    print(args['Api-Key'])
+    user = mhelp.get_user({ 'api_key': args['Api-Key']})
     if user:
         stores = mhelp.get_stores({'owner': user['email']})
         for store in stores:
@@ -78,7 +79,7 @@ def get_store_api(store_name):
     if request.method == 'GET':
         parser = get_parser()
         args = parser.parse_args()
-        user = mhelp.get_user({'current_token': args['Access-Token']})
+        user = mhelp.get_user({ 'api_key': args['Api-Key']})
         if user:
             stores = mhelp.get_stores({'owner': user['email']})
             requested_store = None
@@ -98,7 +99,7 @@ def get_store_api(store_name):
         parser = get_parser()
         args = parser.parse_args()
         data = request.get_json()
-        user = mhelp.get_user({'current_token': args['Access-Token']})
+        user = mhelp.get_user({ 'api_key': args['Api-Key']})
         store = mhelp.get_single_store({'owner': user['email'], 'name': store_name})
         if store and user:
             mongo.db.stores.find_one_and_update({'owner': user['email'], 'name': store_name}, {'$set': {'data':data}})
@@ -110,7 +111,7 @@ def get_store_api(store_name):
     elif request.method == 'DELETE':
         parser = get_parser()
         args = parser.parse_args()
-        user = mhelp.get_user({'current_token': args['Access-Token']})
+        user = mhelp.get_user({ 'api_key': args['Api-Key']})
         if user:
             stores = mhelp.get_stores({'owner': user['email']})
             requested_store = None
@@ -144,7 +145,7 @@ def login_api():
             return jsonify({ "error": "Incorrect Password!" }), 403
     else:
         return jsonify({"error": "Something broke"}), 500
-    return jsonify({"message": "Logged In!", "access_token": access_token}), 200
+    return jsonify({"message": "Logged In!", "api-key": user['api_key']}), 200
     
 @app.route('/login', methods=['POST'])
 def login():
@@ -169,7 +170,7 @@ def login():
     return jsonify({"msg": "logged in!"}), 200
     
 
-@app.route('/signup', methods=['POST'])
+@app.route('/api_v1/signup', methods=['POST'])
 def signup():
     parser = signup_parser()
     args = parser.parse_args()
@@ -185,7 +186,8 @@ def signup():
         "password": pw_hash,
         "date_created": datetime.now(),
         "store_count": 1,
-        "current_token": access_token
+        "current_token": access_token,
+        "api_key": str(uuid4()),
     }
     session['access_token'] = access_token
     store = {
@@ -199,9 +201,9 @@ def signup():
     for store in mongo.db.stores.find():
         if store.get('owner') == new_user['email']:
             stores.append(ObjectId(store.get('_id')))
-    mongo.db.free_users.find_one_and_update({'email': new_user['email']}, {'$set': { 'stores': stores}})
+    mongo.db.free_users.find_one_and_update({'email': new_user['email']}, {'$set': { 'stores': stores }})
     
-    return jsonify({"msg": "Signup complete!"}), 200
+    return jsonify({"msg": "Signup complete!", "api-key": new_user['api_key']}), 200
 
 from app.resources import Create
 

@@ -6,7 +6,7 @@ import json, os
 class MockUserCreds:
     email = 'test_user{}@example.com'.format(str(uuid4()).split('-')[0][0:4])
     password = str(uuid4())
-    access_token = None
+    api_key = None
     store_template = {
         'test_key': 'test_value',
         'test_key_w_sub_dict': {
@@ -30,7 +30,7 @@ class APITests(unittest.TestCase):
         
     def test_1_signup(self):
         print_title('Testing Signup')
-        res = self.app.post('/signup', data={
+        res = self.app.post('/api_v1/signup', data={
             'email': mock_user.email,
             'password': mock_user.password
         })
@@ -46,14 +46,16 @@ class APITests(unittest.TestCase):
         })
         data = json.loads(res.data)
         self.assertTrue(res.status_code, 200)
-        self.assertIsNotNone(data['access_token'])
-        mock_user.access_token = data['access_token']
+        self.assertIsNotNone(data['api-key'])
+        mock_user.api_key = data['api-key']
         mock_user.count += 1
         
     def test_3_get_all_stores(self):
         print_title('Testing Get All Stores')
-        res = self.app.get('/api_v1/all_stores', headers={'Access-Token': mock_user.access_token})
+        print(mock_user.api_key)
+        res = self.app.get('/api_v1/all_stores', headers={'Api-Key': mock_user.api_key})
         data = json.loads(res.data)
+        print(res.data)
         self.assertTrue(res.status_code, 200)
         for store in data['stores']:
             self.assertEqual(store['owner'], mock_user.email)
@@ -62,7 +64,7 @@ class APITests(unittest.TestCase):
     def test_4_create_store(self):
         print_title('Testing Create Store')
         res = self.app.post('/api_v1/create', headers={
-                'Access-Token': mock_user.access_token,
+                'Api-Key': mock_user.api_key,
                 'Content-Type': 'application/json'
             },
             data=json.dumps(mock_user.store_template)
@@ -75,7 +77,7 @@ class APITests(unittest.TestCase):
     
     def test_5_get_all_stores_w_multiple_stores(self):
         print_title('Testing Get All Stores After Creation')
-        res = self.app.get('/api_v1/all_stores', headers={'Access-Token': mock_user.access_token})
+        res = self.app.get('/api_v1/all_stores', headers={'Api-Key': mock_user.api_key})
         data = json.loads(res.data)
         self.assertTrue(res.status_code, 200)
         self.assertEqual(len(data['stores']), 2)
@@ -86,7 +88,7 @@ class APITests(unittest.TestCase):
     def test_6_create_third_store(self):
         print_title('Testing Third Store Creation')
         res = self.app.post('/api_v1/create', headers={
-                'Access-Token': mock_user.access_token,
+                'Api-Key': mock_user.api_key,
                 'Content-Type': 'application/json'
             },
             data=json.dumps(mock_user.store_template)
@@ -99,7 +101,7 @@ class APITests(unittest.TestCase):
     
     def test_7_get_all_stores_with_three(self):
         print_title('Testing Get All Stores With Three Stores')
-        res = self.app.get('/api_v1/all_stores', headers={'Access-Token': mock_user.access_token})
+        res = self.app.get('/api_v1/all_stores', headers={'Api-Key': mock_user.api_key})
         data = json.loads(res.data)
         self.assertTrue(res.status_code, 200)
         self.assertEqual(len(data['stores']), 3)
@@ -110,7 +112,7 @@ class APITests(unittest.TestCase):
     def test_8_max_at_three(self):
         print_title('Testing Max Cap at 3 Stores')
         res = self.app.post('/api_v1/create', headers={
-                'Access-Token': mock_user.access_token,
+                'Api-Key': mock_user.api_key,
                 'Content-Type': 'application/json'
             },
             data=json.dumps(mock_user.store_template)
@@ -122,24 +124,24 @@ class APITests(unittest.TestCase):
     
     def test_9_edit_store(self):
         print_title('Testing PUT on Store (Edit)')
-        res = self.app.get('/api_v1/all_stores', headers={'Access-Token': mock_user.access_token})
+        res = self.app.get('/api_v1/all_stores', headers={'Api-Key': mock_user.api_key})
         data = json.loads(res.data)
         store = data['stores'][0]
         old_data = store['data']
         new_data = old_data.update({'new_value': 'value11'})
-        res = self.app.put('/api_v1/stores/{}'.format(store['name']), headers={'Access-Token': mock_user.access_token}, data=json.dumps(new_data))
+        res = self.app.put('/api_v1/stores/{}'.format(store['name']), headers={'Api-Key': mock_user.api_key}, data=json.dumps(new_data))
         self.assertTrue(res.status_code == 200)
-        res = self.app.get('/api_v1/stores/{}'.format(store['name']), headers={'Access-Token': mock_user.access_token})
+        res = self.app.get('/api_v1/stores/{}'.format(store['name']), headers={'Api-Key': mock_user.api_key})
         data = json.loads(res.data)
         self.assertTrue(res.status_code == 200)
         self.assertNotEqual(mock_user.store_template, data)
     
     def test_a1_delete_stores(self):
         print_title('Testing DELETE on Store (Delete)')
-        res = self.app.get('/api_v1/all_stores', headers={'Access-Token': mock_user.access_token})
+        res = self.app.get('/api_v1/all_stores', headers={'Api-Key': mock_user.api_key})
         data = json.loads(res.data)
         for store in data['stores']:
-            res = self.app.delete('/api_v1/stores/{}'.format(store['name']), headers={'Access-Token': mock_user.access_token})
+            res = self.app.delete('/api_v1/stores/{}'.format(store['name']), headers={'Api-Key': mock_user.api_key})
             self.assertTrue(res.status_code == 200)
             self.assertTrue(res.json == { 'message': 'Success' })
             
