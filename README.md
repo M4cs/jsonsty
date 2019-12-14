@@ -16,8 +16,10 @@ Template for said file is as follows:
 
 You will want to set your TEST_MONGO_URI as your test database and then run either `prepare-testing.sh` or `prepare-testing.bat`
 
+Then you will need to run the following commands:
+
 ```
-pip3 install poetry
+pip3 install poetry # or upgrade it since we need to be on the most recent version
 poetry install
 poetry run server
 ```
