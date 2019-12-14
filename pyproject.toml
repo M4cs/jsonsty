@@ -12,6 +12,7 @@ flask-pymongo = "^2.3.0"
 flask-restful = "^0.3.7"
 
 [tool.poetry.dev-dependencies]
+unittest = "*"
 
 [build-system]
 requires = ["poetry>=0.12"]
