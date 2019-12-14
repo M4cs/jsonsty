@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, session, request
 from flask_restful import reqparse, Api
-from flask_mongoengine import MongoEngine
 from flask_pymongo import PyMongo
 from uuid import uuid4
 from bson import ObjectId
