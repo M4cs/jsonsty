@@ -1,8 +1,18 @@
 store_template = """\
-    <details style="display: flex; flex-direction: column; align-items: flex-start; background-color: #212121; padding: 10px 10px 10px; margin: 1em 0; border-radius: 6px; overflow: hidden;">
-      <summary>{store_name}</summary>
-      <p><code>{data}</code></p>
-    </details>
-    <form action="/stores/{store_name}/delete" method="GET">
-      <button type="submit" class="button">Delete Store</button>
-    </form>"""
+    <fieldset>
+      <div style="display: flex; align-items: center; justify-content: center;">
+        <button class="button" id="{store_name}_edit" style="margin-top: 1rem; display: inline-block;" onclick="changeTextarea(document.getElementById('{store_name}'));changeSavebutton(document.getElementById('{store_name}_button'));changeCancelbutton(this);">Edit Store</button>
+      </div>
+      <form action="/stores/{store_name}/edit" method="POST">
+      <details style="display: flex; flex-direction: column; align-items: flex-start; background-color: #161f27; padding: 10px 10px 10px; margin: 1em 0; border-radius: 6px; overflow: hidden;">
+        <summary><b>Name:</b> {store_name}</summary>
+        <textarea name="data" id="{store_name}" style="margin-top: 2px;" readonly>{data}</textarea>
+      </details>
+      <div style="display: flex; align-items: center; justify-content: center;">
+        <button type="submit" class="button" id="{store_name}_button" disabled>Save Store</button>
+        </form>
+        <form action="/stores/{store_name}/delete" style="display: inline-block;" method="GET">
+          <button type="submit" class="button" style="color: red;">Delete Store</button>
+        </form>
+      </div>
+    </fieldset>"""
