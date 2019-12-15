@@ -116,7 +116,7 @@ def stores():
             else:
                 template = "<center><h3>No Stores Found. Read the API to learn how to make them!<h3></center>"
             return render_template('stores.html', stores=template, msg=msg, color=color, u_msg=u_msg)
-    return redirect(app.config['BASE_URL'] +'login', 302)
+    return redirect(app.config['BASE_URL'] +'/login', 302)
 
 @app.route('/stores/<store_name>/delete', methods=['GET'])
 def del_store(store_name):
