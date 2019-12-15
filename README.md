@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://github.com/M4cs/jsonsty/blob/master/banner.png?raw=true">
+    <img src="https://github.com/M4cs/jsonsty/blob/master/examples/banner.png?raw=true">
     <br>
     <b>Made with Python and Flask</b>
     <br>
