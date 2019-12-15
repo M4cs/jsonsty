@@ -22,8 +22,8 @@ class Create(Resource):
             print('Failed')
             return {"error": "Unauthorized"}, 403
         user = mhelp.get_user({'api_key': args['Api-Key']})
-        if user['store_count'] == 3:
-            return {"error": "Reached 3 store maximum!"}, 403
+        if user['store_count'] == 100:
+            return {"error": "Reached 100 store maximum!"}, 403
         else:
             name = create_chain()
             count = user['store_count'] + 1

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html style="overflow-y: auto;">
+
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/kognise/water.css@latest/dist/dark.min.css">
+    <title>JSON PSTY | Free Cloud JSON Storage</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Fast, Secure, and Free Cloud JSON Storage">
+    <meta name="keywords"
+        content="json, storage, json storage, cloud storage, temporary storage, json store, jsonstore, cloud json db">
+    <link rel="stylesheet" href="assets/css/jsty.css">
+</head>
+
+<body>
+    <a target="_self" href="https://github.com/M4cs/jsonsty" class="github-corner" aria-label="View source on Github"
+        alt="View Source on GitHub" title="View Source on GitHub">
+        <svg width="80" height="80" viewBox="0 0 250 250"
+            style="fill:#fff; color:#212121 !important; position: absolute; top: 0; border: 0; right: 0;"
+            aria-hidden="true">
+            <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+            <path
+                d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+                fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+            <path
+                d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+                fill="currentColor" class="octo-body"></path>
+            <div class="ripple-container"></div>
+        </svg></a>
+        <div style="display: flex; align-items: center; justify-content: center;">
+            <a href="/" style="display: inline-block;"><button type="submit" class="button">Home</button></a>
+            <a href="/signup" style="display: inline-block;"><button type="submit" class="button">Signup</button></a>
+        </div>
+    <h1 class="code-line" data-line-start=0 data-line-end=1><a
+            id="JSONsty__A_temporary_JSON_store_with_Authorization_0"></a>JSONsty - A temporary JSON store with
+        Authorization</h1>
+    <h1 class="code-line" data-line-start=2 data-line-end=3><a id="Getting_Started_2"></a>Getting Started</h1>
+    <p class="has-line-data" data-line-start="4" data-line-end="5">Sign Up for the JSONsty service and remember your
+        username and password.</p>
+    <p class="has-line-data" data-line-start="6" data-line-end="7"><strong>BASE URL</strong>:
+        <code>https://json.psty.io/api_v1/</code></p>
+    <h1 class="code-line" data-line-start=8 data-line-end=9><a id="Authorization_8"></a>Authorization</h1>
+    <h2 class="code-line" data-line-start=10 data-line-end=11><a id="Login_10"></a>Login</h2>
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th style="text-align:center">Parameter</th>
+                <th style="text-align:center">Description</th>
+                <th style="text-align:center">Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="text-align:center">email</td>
+                <td style="text-align:center">E-mail you used to sign-up for JSONsty</td>
+                <td style="text-align:center">String</td>
+            </tr>
+            <tr>
+                <td style="text-align:center">password</td>
+                <td style="text-align:center">Your account password used to sign in to JSONsty</td>
+                <td style="text-align:center">String</td>
+            </tr>
+        </tbody>
+    </table>
+    <p class="has-line-data" data-line-start="17" data-line-end="18">This endpoint will return a status message and if
+        successful, an access token.</p>
+    <p class="has-line-data" data-line-start="19" data-line-end="20"><strong>URL</strong>: POST
+        <code>https://json.psty.io/api_v1/login</code></p>
+    <p class="has-line-data" data-line-start="21" data-line-end="22">Example Request:</p>
+    <pre><code class="has-line-data" data-line-start="24" data-line-end="29" class="language-python">&gt;&gt; <span class="hljs-keyword">import</span> requests
+&gt;&gt; res = requests.get(<span class="hljs-string">'https://json.psty.io/api_v1/login'</span>, data={<span class="hljs-string">'email'</span>: <span class="hljs-string">'test@example.com'</span>, <span class="hljs-string">'password'</span>: <span class="hljs-string">'example123!'</span>)
+&gt;&gt; print(res.json)
+{ <span class="hljs-string">"message"</span>: <span class="hljs-string">"Logged In!"</span>, <span class="hljs-string">"access_token"</span>: <span class="hljs-string">"&lt;ACCESS_TOKEN&gt;"</span> }
+</code></pre>
+    <h4 class="code-line" data-line-start=30 data-line-end=31><a
+            id="All_requests_require_including_the_access_token_in_the_header_passed_as_access_token_30"></a>All
+        requests require including the <code>access_token</code> in the header passed as access_token.</h4>
+    <h1 class="code-line" data-line-start=32 data-line-end=33><a id="Creating_Stores_32"></a>Creating Stores</h1>
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th style="text-align:center">Parameter</th>
+                <th style="text-align:center">Description</th>
+                <th style="text-align:center">Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="text-align:center">data</td>
+                <td style="text-align:center">JSON Data to Post</td>
+                <td style="text-align:center">JSON</td>
+            </tr>
+        </tbody>
+    </table>
+    <p class="has-line-data" data-line-start="38" data-line-end="39"><strong>URL</strong>: GET
+        <code>https://json.psty.io/api_v1/create</code></p>
+    <p class="has-line-data" data-line-start="40" data-line-end="41">Example Request:</p>
+    <pre><code class="has-line-data" data-line-start="43" data-line-end="50" class="language-python">&gt;&gt; <span class="hljs-keyword">import</span> requests, json
+&gt;&gt; headers = { <span class="hljs-string">'access_token'</span>: <span class="hljs-string">'&lt;ACCESS-TOKEN&gt;'</span>, <span class="hljs-string">'Content-Type'</span>: <span class="hljs-string">'application/json'</span> }
+&gt;&gt; data = {<span class="hljs-string">'test_data'</span>: { <span class="hljs-string">'test_array'</span>: [<span class="hljs-string">'test_val1'</span>, <span class="hljs-string">'test_val2'</span>] }
+&gt;&gt; res = requests.get(<span class="hljs-string">'https://json.psty.io/api_v1/create'</span>, json=data)
+&gt;&gt; print(res.json)
+{ <span class="hljs-string">"message"</span>: <span class="hljs-string">"Success"</span>, <span class="hljs-string">"name"</span>: name }
+</code></pre>
+    <h1 class="code-line" data-line-start=51 data-line-end=52><a id="Getting_Store_51"></a>Getting Store</h1>
+    <p class="has-line-data" data-line-start="53" data-line-end="54"><strong>URL:</strong> GET
+        <code>https://json.psty.io/api_v1/stores/&lt;STORE_NAME&gt;</code></p>
+    <p class="has-line-data" data-line-start="55" data-line-end="56">Example Request:</p>
+    <pre><code class="has-line-data" data-line-start="58" data-line-end="64" class="language-python">&gt;&gt; <span class="hljs-keyword">import</span> requests
+&gt;&gt; headers = { <span class="hljs-string">'access_token'</span>: <span class="hljs-string">'&lt;ACCESS-TOKEN&gt;'</span> }
+&gt;&gt; res = requests.get(<span class="hljs-string">'https://json.psty.io/api_v1/stores/&lt;STORE_NAME&gt;'</span>)
+&gt;&gt; print(res.json)
+{<span class="hljs-string">'test_data'</span>: { <span class="hljs-string">'test_array'</span>: [<span class="hljs-string">'test_val1'</span>, <span class="hljs-string">'test_val2'</span>] }
+</code></pre>
+    <h1 class="code-line" data-line-start=65 data-line-end=66><a id="Editing_Store_65"></a>Editing Store</h1>
+    <p class="has-line-data" data-line-start="67" data-line-end="68"><strong>URL:</strong> PUT
+        <code>https://json.psty.io/api_v1/stores/&lt;STORE_NAME&gt;</code></p>
+    <p class="has-line-data" data-line-start="69" data-line-end="70">Example Request:</p>
+    <pre><code class="has-line-data" data-line-start="72" data-line-end="81" class="language-python">&gt;&gt; <span class="hljs-keyword">import</span> requests
+&gt;&gt; headers = { <span class="hljs-string">'access_token'</span>: <span class="hljs-string">'&lt;ACCESS-TOKEN&gt;'</span>, <span class="hljs-string">'Content-Type'</span>: <span class="hljs-string">'application/json'</span> }
+&gt;&gt; res = requests.get(<span class="hljs-string">'https://json.psty.io/api_v1/stores/&lt;STORE_NAME&gt;'</span>)
+&gt;&gt; new_data = res.json.copy()
+&gt;&gt; new_data.update({<span class="hljs-string">'new_key'</span>: <span class="hljs-string">'new_value'</span>)
+&gt;&gt; res = requests.put(<span class="hljs-string">'https://json.psty.io/api_v1/stores/&lt;STORE_NAME&gt;'</span>, data=new_data)
+&gt;&gt; print(res.json)
+{<span class="hljs-string">'test_data'</span>: { <span class="hljs-string">'test_array'</span>: [<span class="hljs-string">'test_val1'</span>, <span class="hljs-string">'test_val2'</span>] }
+</code></pre>
+    <h1 class="code-line" data-line-start=82 data-line-end=83><a id="Getting_All_Stores_82"></a>Getting All Stores</h1>
+    <p class="has-line-data" data-line-start="84" data-line-end="85"><strong>URL:</strong> GET
+        <code>https://json.psty.io/api_v1/all_stores</code></p>
+    <p class="has-line-data" data-line-start="86" data-line-end="87">Example Request:</p>
+    <pre><code class="has-line-data" data-line-start="89" data-line-end="117" class="language-python">&gt;&gt; <span class="hljs-keyword">import</span> requests
+&gt;&gt; headers = { <span class="hljs-string">'access_token'</span>: <span class="hljs-string">'&lt;ACCESS-TOKEN&gt;'</span> }
+&gt;&gt; res = requests.get(<span class="hljs-string">'https://json.psty.io/api_v1/all_stores'</span>)
+&gt;&gt; print(res.json)
+{
+  <span class="hljs-string">"stores"</span>: [
+    {
+      <span class="hljs-string">"_id"</span>: <span class="hljs-string">"5df486f92766fa2af193e148"</span>,
+      <span class="hljs-string">"data"</span>: {},
+      <span class="hljs-string">"name"</span>: <span class="hljs-string">"bcda975c-bb4b-4b12-ac51-be52b1e9934d"</span>,
+      <span class="hljs-string">"owner"</span>: <span class="hljs-string">"test@example.com"</span>
+    },
+    {
+      <span class="hljs-string">"_id"</span>: <span class="hljs-string">"5df487587605c3bac616ed55"</span>,
+      <span class="hljs-string">"data"</span>: {
+        <span class="hljs-string">"test_data"</span>: {
+          <span class="hljs-string">"test_array"</span>: [
+            <span class="hljs-string">"test_val1"</span>,
+            <span class="hljs-string">"test_val2"</span>
+          ]
+        }
+      },
+      <span class="hljs-string">"name"</span>: <span class="hljs-string">"13d2708d-2506-4ab2-a958-0d7cde506147"</span>,
+      <span class="hljs-string">"owner"</span>: <span class="hljs-string">"test@example.com"</span>
+    }
+  ]
+}
+</code></pre>
+    <h1 class="code-line" data-line-start=118 data-line-end=119><a id="Deleting_Stores_118"></a>Deleting Stores</h1>
+    <p class="has-line-data" data-line-start="120" data-line-end="121"><strong>URL:</strong> DELETE
+        <code>https://json.psty.io/api_v1/stores/&lt;STORE_NAME&gt;</code></p>
+    <p class="has-line-data" data-line-start="122" data-line-end="123">Example Request:</p>
+    <pre><code class="has-line-data" data-line-start="125" data-line-end="131" class="language-python">&gt;&gt; <span class="hljs-keyword">import</span> requests
+&gt;&gt; headers = { <span class="hljs-string">'access_token'</span>: <span class="hljs-string">'&lt;ACCESS-TOKEN&gt;'</span> }
+&gt;&gt; res = requests.delete(<span class="hljs-string">'https://json.psty.io/api_v1/stores/&lt;STORE_NAME&gt;'</span>)
+&gt;&gt; print(res.json)
+{ <span class="hljs-string">"message"</span>: <span class="hljs-string">"Success"</span> }
+</code></pre>
+
+</body>
+
+</html>
