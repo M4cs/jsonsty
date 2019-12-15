@@ -91,13 +91,13 @@
             </tr>
         </tbody>
     </table>
-    <p class="has-line-data" data-line-start="38" data-line-end="39"><strong>URL</strong>: GET
+    <p class="has-line-data" data-line-start="38" data-line-end="39"><strong>URL</strong>: POST
         <code>https://json.psty.io/api_v1/create</code></p>
     <p class="has-line-data" data-line-start="40" data-line-end="41">Example Request:</p>
     <pre><code class="has-line-data" data-line-start="43" data-line-end="50" class="language-python">&gt;&gt; <span class="hljs-keyword">import</span> requests, json
 &gt;&gt; headers = { <span class="hljs-string">'access_token'</span>: <span class="hljs-string">'&lt;ACCESS-TOKEN&gt;'</span>, <span class="hljs-string">'Content-Type'</span>: <span class="hljs-string">'application/json'</span> }
 &gt;&gt; data = {<span class="hljs-string">'test_data'</span>: { <span class="hljs-string">'test_array'</span>: [<span class="hljs-string">'test_val1'</span>, <span class="hljs-string">'test_val2'</span>] }
-&gt;&gt; res = requests.get(<span class="hljs-string">'https://json.psty.io/api_v1/create'</span>, json=data)
+&gt;&gt; res = requests.post(<span class="hljs-string">'https://json.psty.io/api_v1/create'</span>, json=data)
 &gt;&gt; print(res.json)
 { <span class="hljs-string">"message"</span>: <span class="hljs-string">"Success"</span>, <span class="hljs-string">"name"</span>: name }
 </code></pre>
