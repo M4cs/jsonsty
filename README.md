@@ -1,4 +1,6 @@
 <p align="center">
+    <a href="https://github.com/kognise/water.css"><img src="https://github.com/kognise/water.css/raw/master/logo.svg?sanitize=true" width="25%"></a><a href=""><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Flask_logo.svg/1200px-Flask_logo.svg.png" width="25%;">
+    <br>
     <img src="https://github.com/M4cs/jsonsty/blob/master/banner.png?raw=true">
     <br>
     <b>Made with Python and Flask</b>
