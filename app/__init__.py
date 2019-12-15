@@ -206,8 +206,6 @@ def signup():
             pass
         else:
             return render_template('signup.html', error="Email In Use!")
-        if not validate_email(args['email'], verify=True):
-            return render_template('signup.html', error="Email Invalid Format!")
         pw_hash = generate_password_hash(args['password'], method="sha256", salt_length=16)
         access_token = str(uuid4())
         new_user = {
