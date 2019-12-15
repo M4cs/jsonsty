@@ -86,7 +86,8 @@ def index():
         if user:
             return redirect(app.config['BASE_URL'] +'/stores', 302)
     else:
-        return render_template('index.html'), 200
+        number = mongo.db.free_users.count()
+        return render_template('index.html', number=number), 200
     
 @app.route('/stores', methods=['GET'])
 def stores():
