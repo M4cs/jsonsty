@@ -31,7 +31,7 @@ This will be your token for Authenticating with the JSONsty API. More info on th
 # JSONsty's Development
 
 <p align="center">
-    <a href="https://github.com/kognise/water.css"><img src="https://github.com/kognise/water.css/raw/master/logo.svg?sanitize=true" width="25%"></a><a href=""><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Flask_logo.svg/1200px-Flask_logo.svg.png" width="25%;"><img src="https://www.python.org/static/community_logos/python-logo-master-v3-TM-flattened.png" width="25%">
+    <a href="https://github.com/kognise/water.css"><img src="https://github.com/kognise/water.css/raw/master/logo.svg?sanitize=true" width="25%"></a><a href=""><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Flask_logo.svg/1200px-Flask_logo.svg.png" width="25%;"></a><a href="python.org"><img src="https://www.python.org/static/community_logos/python-logo-master-v3-TM-flattened.png" width="25%"></a>
 </p>
 
 JSONsty was written in Python using the Flask framework. The development enviroment is pretty simple to setup. Poetry is used for dependency management and for a virtual env. You can install `poetry` by running `pip install poetry`. You will have to be on the first stable release or higher though as that's what this was built with. 
