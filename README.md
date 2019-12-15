@@ -1,33 +1,11 @@
-# Development
-
-You will need to connect a development database to your project. I will not be providing a development db to save on space so you should be able to host one yourself or just get a free one from mongodb.com.
-
-Create a `.config.json` file in the root of the project.
-
-Template for said file is as follows:
-
-```json
-{
-    "MONGO_URI": "MONGO_URI",
-    "TEST_MONGO_URI": "MONGO_URI",
-    "SECRET_KEY": "SECRET_KEY"
-}
-```
-
-You will want to set your TEST_MONGO_URI as your test database and then run either `prepare-testing.sh` or `prepare-testing.bat`
-
-Then you will need to run the following commands:
-
-```
-pip3 install poetry # or upgrade it since we need to be on the most recent version
-poetry install
-poetry run server
-```
-
-This will run the application for you. To run unittests run the following command:
-
-```
-python -m unittest
-```
-
-This will run tests inside `test_app`.
+<p align="center">
+    <img src="https://github.com/M4cs/jsonsty/blob/master/banner.png?raw=true">
+    <br>
+    <b>Made with Python and Flask</b>
+    <br>
+    <a href="https://github.com/M4cs/jsonsty/stargazers"><img src="https://img.shields.io/github/stars/M4cs/jsonsty"></a>
+    <a href="https://github.com/M4cs/jsonsty/issues"><img src="https://img.shields.io/github/issues/M4cs/jsonsty"></a>
+    <a href="https://github.com/M4cs/jsonsty/forks"><img src="https://img.shields.io/github/forks/M4cs/jsonsty"></a>
+    <a href=""><img src="https://img.shields.io/github/license/M4cs/jsonsty"></a>
+    <img src="https://img.shields.io/badge/python-3.6%2B-green">
+</p>
