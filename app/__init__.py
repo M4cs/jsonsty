@@ -158,7 +158,7 @@ def create_store():
     try:
         data = json.loads(args['data'])
     except:
-        return redirect('/stores?msg=Bad+JSON+Data', 302)
+        return redirect(app.config['BASE_URL'] +'/stores?msg=Bad+JSON+Data', 302)
     name = args['store_name']
     if session.get('access_token'):
         user = mongo.db.free_users.find_one({ 'current_token': session.get('access_token')})
@@ -166,7 +166,7 @@ def create_store():
             for store in user['stores']:
                 store = mhelp.get_single_store({ '_id': store})
                 if store['name'] == name:
-                    return redirect('/stores?msg=Name+In+Use+Already', 302)
+                    return redirect(app.config['BASE_URL'] +'/stores?msg=Name+In+Use+Already', 302)
             mongo.db.stores.insert_one({
                 'owner': user['email'],
                 'name': name,
