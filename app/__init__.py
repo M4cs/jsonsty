@@ -41,12 +41,6 @@ words = open('app/templates/words', 'r').readlines()
 def make_session_permanent():
     session.permanent = True
     app.permanent_session_lifetime = timedelta(days=90)
-    
-
-@app.errorhandler(500):
-def handle_five(error):
-    session.clear()
-    return redirect('/', 302)
 
 def create_chain():
     word = ""
@@ -92,7 +86,8 @@ def index():
         if user:
             return redirect(app.config['BASE_URL'] +'/stores', 302)
         else:
-            return redirect('/', 302)
+            session.clear()
+            return redirect(app.config['BASE_URL'] + '/', 302)
     else:
         number = mongo.db.free_users.count()
         return render_template('index.html', number=number), 200
@@ -125,6 +120,8 @@ def stores():
             else:
                 template = "<center><h3>No Stores Found. Read the API to learn how to make them!<h3></center>"
             return render_template('stores.html', stores=template, msg=msg, color=color, u_msg=u_msg)
+        else:
+            session.clear()
     return redirect(app.config['BASE_URL'] +'/login', 302)
 
 @app.route('/stores/<store_name>/delete', methods=['GET'])
@@ -141,6 +138,7 @@ def del_store(store_name):
                     return redirect(app.config['BASE_URL'] +'/stores?umsg=Store+Deleted+Successfully&color=green', 302)
             return redirect(app.config['BASE_URL'] +'/stores', 302)
         else:
+            session.clear()
             return redirect(app.config['BASE_URL'] +'/login', 302)
     return redirect(app.config['BASE_URL'] +'/login', 302)
 
@@ -184,6 +182,8 @@ def create_store():
             stores = mhelp.get_store_ids({ 'owner': user['email']})
             mongo.db.free_users.find_one_and_update({ '_id': user['_id']}, { '$set': { 'store_count': user['store_count'] + 1, 'stores': stores}})
             return redirect(app.config['BASE_URL'] +'/stores?umsg=Store+Created+Successfully&color=green', 302)
+        else:
+            session.clear()
     return redirect(app.config['BASE_URL'] + '/login')
     
 @app.route('/login', methods=['GET', 'POST'])
@@ -206,6 +206,7 @@ def login():
             else:
                 return render_template('login.html', error="Incorrect Password!"), 200
         else:
+            session.clear()
             return render_template('login.html', error="Something Broke. Try Again Later."), 200
         return redirect(app.config['BASE_URL'] +'/stores', 302)
     elif request.method == 'GET':
@@ -225,6 +226,9 @@ def account():
         user = mhelp.get_user({'current_token': session.get('access_token')})
         if user:
             return render_template('account.html', email=user['email'], store_count=user['store_count'], api_key=user['api_key'])
+        else:
+            session.clear()
+            return redirect(app.config['BASE_URL'] + '/login', 302)
     else:
         return redirect(app.config['BASE_URL'] +'/login', 302)
     
