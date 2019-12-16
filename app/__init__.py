@@ -44,7 +44,7 @@ def make_session_permanent():
     
 
 @app.errorhandler(500):
-def handle_five(e):
+def handle_five(error):
     session.clear()
     return redirect('/', 302)
 
