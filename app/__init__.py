@@ -41,6 +41,11 @@ words = open('app/templates/words', 'r').readlines()
 def make_session_permanent():
     session.permanent = True
     app.permanent_session_lifetime = timedelta(days=90)
+    
+@app.errorhandler(500):
+def handle_five(e):
+    session.clear()
+    return redirect('/', 302)
 
 def create_chain():
     word = ""
@@ -206,7 +211,7 @@ def login():
             if user:
                 return redirect(app.config['BASE_URL'] +'/stores', 302)
             else:
-                session['access_token'] = None
+                session.clear()
                 return render_template('login.html'), 200
         else:
             return render_template('login.html'), 200
@@ -235,10 +240,10 @@ def logout():
             user = mhelp.get_user({ 'current_token': session['access_token']})
             if user:
                 mongo.db.free_users.find_one_and_update({ '_id': user['_id']}, {'$set': {'current_token': ''}})
-                session['access_token'] = None
+                session.clear()
                 return redirect(app.config['BASE_URL'] +'/', 302)
             else:
-                session['access_token'] = None
+                session.clear()
                 return redirect(app.config['BASE_URL'] +'/', 302)
         else:
             return redirect(app.config['BASE_URL'] +'/', 302)
