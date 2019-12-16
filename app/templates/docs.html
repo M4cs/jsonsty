@@ -10,36 +10,50 @@
         content="json, storage, json storage, cloud storage, temporary storage, json store, jsonstore, cloud json db">
     <link rel="stylesheet" href="assets/css/jsty.css">
 </head>
-<h1 class="code-line" data-line-start="0" data-line-end="1"><a id="JSONsty_API_Documentation_0"></a>JSONsty API Documentation</h1>
-<p class="has-line-data" data-line-start="2" data-line-end="3">We offer a free JSON API to give you an easy way to interface with our service in your own apps. Below you will find documentation on said REST API.</p>
-<h1 class="code-line" data-line-start="4" data-line-end="5"><a id="Authorization_4"></a>Authorization</h1>
-<p class="has-line-data" data-line-start="6" data-line-end="7">First signup here: <a href="https://json.psty.io/signup">https://json.psty.io/signup</a></p>
-<p class="has-line-data" data-line-start="8" data-line-end="9">Find your API token here: <a href="https://json.psty.io/account">https://json.psty.io/account</a></p>
-<p class="has-line-data" data-line-start="10" data-line-end="11">Authorize with the API by passing <code>Api-Key</code> with your API key as the value in all of your headers.</p>
-<h1 class="code-line" data-line-start="12" data-line-end="13"><a id="Creating_A_Store_12"></a>Creating A Store</h1>
-<p class="has-line-data" data-line-start="14" data-line-end="15"><strong>URL:</strong> <code>https://json.psty.io/api_v1/create</code></p>
-<p class="has-line-data" data-line-start="16" data-line-end="17"><strong>Extra Headers:</strong> <code>{ 'Content-Type': 'application/json' }</code></p>
-<p class="has-line-data" data-line-start="18" data-line-end="19"><strong>Request Type:</strong> <code>POST</code></p>
-<table class="table table-striped table-bordered">
-<thead>
-<tr>
-<th style="text-align:center">Parameter</th>
-<th style="text-align:center">Description</th>
-<th style="text-align:center">Type</th>
-<th style="text-align:center">Location</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:center"></td>
-<td style="text-align:center">The JSON data you’d like to post to create</td>
-<td style="text-align:center">Dict</td>
-<td style="text-align:center">JSON Body</td>
-</tr>
-</tbody>
-</table>
-<p class="has-line-data" data-line-start="24" data-line-end="25"><strong>Example Request:</strong></p>
-<pre><code class="has-line-data" data-line-start="27" data-line-end="39">&gt;&gt; import requests
+
+<body>
+    <div style="display: flex; align-items: center; justify-content: center;">
+        <a href="/" style="display: inline-block;"><button type="submit" class="button">Home</button></a>
+        {{signup | safe}}
+    </div>
+    <h1 class="code-line" data-line-start="0" data-line-end="1"><a id="JSONsty_API_Documentation_0"></a>JSONsty API
+        Documentation</h1>
+    <p class="has-line-data" data-line-start="2" data-line-end="3">We offer a free JSON API to give you an easy way to
+        interface with our service in your own apps. Below you will find documentation on said REST API.</p>
+    <h1 class="code-line" data-line-start="4" data-line-end="5"><a id="Authorization_4"></a>Authorization</h1>
+    <p class="has-line-data" data-line-start="6" data-line-end="7">First signup here: <a
+            href="https://json.psty.io/signup">https://json.psty.io/signup</a></p>
+    <p class="has-line-data" data-line-start="8" data-line-end="9">Find your API token here: <a
+            href="https://json.psty.io/account">https://json.psty.io/account</a></p>
+    <p class="has-line-data" data-line-start="10" data-line-end="11">Authorize with the API by passing
+        <code>Api-Key</code> with your API key as the value in all of your headers.</p>
+    <h1 class="code-line" data-line-start="12" data-line-end="13"><a id="Creating_A_Store_12"></a>Creating A Store</h1>
+    <p class="has-line-data" data-line-start="14" data-line-end="15"><strong>URL:</strong>
+        <code>https://json.psty.io/api_v1/create</code></p>
+    <p class="has-line-data" data-line-start="16" data-line-end="17"><strong>Extra Headers:</strong>
+        <code>{ 'Content-Type': 'application/json' }</code></p>
+    <p class="has-line-data" data-line-start="18" data-line-end="19"><strong>Request Type:</strong> <code>POST</code>
+    </p>
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th style="text-align:center">Parameter</th>
+                <th style="text-align:center">Description</th>
+                <th style="text-align:center">Type</th>
+                <th style="text-align:center">Location</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="text-align:center"></td>
+                <td style="text-align:center">The JSON data you’d like to post to create</td>
+                <td style="text-align:center">Dict</td>
+                <td style="text-align:center">JSON Body</td>
+            </tr>
+        </tbody>
+    </table>
+    <p class="has-line-data" data-line-start="24" data-line-end="25"><strong>Example Request:</strong></p>
+    <pre><code class="has-line-data" data-line-start="27" data-line-end="39">&gt;&gt; import requests
 &gt;&gt; res = requests.post(
     'https://json.psty.io/api_v1/create',
     headers={
@@ -51,30 +65,32 @@
 &gt;&gt; print(res.content)
 { "message": "Success", "name": "NewNameOfStore" }
 </code></pre>
-<h1 class="code-line" data-line-start="40" data-line-end="41"><a id="Updating_A_Store_40"></a>Updating A Store</h1>
-<p class="has-line-data" data-line-start="42" data-line-end="43"><strong>URL:</strong> <code>https://json.psty.io/api_v1/stores/&lt;store_name&gt;</code></p>
-<p class="has-line-data" data-line-start="44" data-line-end="45"><strong>Extra Headers:</strong> <code>{ 'Content-Type': 'application/json' }</code></p>
-<p class="has-line-data" data-line-start="46" data-line-end="47"><strong>Request Type:</strong> <code>PUT</code></p>
-<table class="table table-striped table-bordered">
-<thead>
-<tr>
-<th style="text-align:center">Parameter</th>
-<th style="text-align:center">Description</th>
-<th style="text-align:center">Type</th>
-<th style="text-align:center">Location</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:center">data</td>
-<td style="text-align:center">The JSON data you’d like to post to update</td>
-<td style="text-align:center">Dict</td>
-<td style="text-align:center">JSON Body</td>
-</tr>
-</tbody>
-</table>
-<p class="has-line-data" data-line-start="52" data-line-end="53"><strong>Example Request:</strong></p>
-<pre><code class="has-line-data" data-line-start="55" data-line-end="67">&gt;&gt; import requests
+    <h1 class="code-line" data-line-start="40" data-line-end="41"><a id="Updating_A_Store_40"></a>Updating A Store</h1>
+    <p class="has-line-data" data-line-start="42" data-line-end="43"><strong>URL:</strong>
+        <code>https://json.psty.io/api_v1/stores/&lt;store_name&gt;</code></p>
+    <p class="has-line-data" data-line-start="44" data-line-end="45"><strong>Extra Headers:</strong>
+        <code>{ 'Content-Type': 'application/json' }</code></p>
+    <p class="has-line-data" data-line-start="46" data-line-end="47"><strong>Request Type:</strong> <code>PUT</code></p>
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th style="text-align:center">Parameter</th>
+                <th style="text-align:center">Description</th>
+                <th style="text-align:center">Type</th>
+                <th style="text-align:center">Location</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="text-align:center">data</td>
+                <td style="text-align:center">The JSON data you’d like to post to update</td>
+                <td style="text-align:center">Dict</td>
+                <td style="text-align:center">JSON Body</td>
+            </tr>
+        </tbody>
+    </table>
+    <p class="has-line-data" data-line-start="52" data-line-end="53"><strong>Example Request:</strong></p>
+    <pre><code class="has-line-data" data-line-start="55" data-line-end="67">&gt;&gt; import requests
 &gt;&gt; res = requests.put(
     'https://json.psty.io/api_v1/stores/&lt;STORE_NAME&gt;',
     headers={
@@ -86,11 +102,13 @@
 &gt;&gt; print(res.content)
 { "message": "Updated Store" }
 </code></pre>
-<h1 class="code-line" data-line-start="68" data-line-end="69"><a id="Deleting_A_Store_68"></a>Deleting A Store</h1>
-<p class="has-line-data" data-line-start="70" data-line-end="71"><strong>URL:</strong> <code>https://json.psty.io/api_v1/stores/&lt;store_name&gt;</code></p>
-<p class="has-line-data" data-line-start="72" data-line-end="73"><strong>Request Type:</strong> <code>DELETE</code></p>
-<p class="has-line-data" data-line-start="74" data-line-end="75"><strong>Example Request:</strong></p>
-<pre><code class="has-line-data" data-line-start="77" data-line-end="88">&gt;&gt; import requests
+    <h1 class="code-line" data-line-start="68" data-line-end="69"><a id="Deleting_A_Store_68"></a>Deleting A Store</h1>
+    <p class="has-line-data" data-line-start="70" data-line-end="71"><strong>URL:</strong>
+        <code>https://json.psty.io/api_v1/stores/&lt;store_name&gt;</code></p>
+    <p class="has-line-data" data-line-start="72" data-line-end="73"><strong>Request Type:</strong> <code>DELETE</code>
+    </p>
+    <p class="has-line-data" data-line-start="74" data-line-end="75"><strong>Example Request:</strong></p>
+    <pre><code class="has-line-data" data-line-start="77" data-line-end="88">&gt;&gt; import requests
 &gt;&gt; res = requests.delete(
     'https://json.psty.io/api_v1/stores/&lt;STORE_NAME&gt;',
     headers={
@@ -101,11 +119,13 @@
 &gt;&gt; print(res.content)
 { "message": "Deleted Store" }
 </code></pre>
-<h1 class="code-line" data-line-start="89" data-line-end="90"><a id="Getting_All_Stores_89"></a>Getting All Stores</h1>
-<p class="has-line-data" data-line-start="91" data-line-end="92"><strong>URL:</strong> <code>https://json.psty.io/api_v1/all_stores</code></p>
-<p class="has-line-data" data-line-start="93" data-line-end="94"><strong>Request Type:</strong> <code>GET</code></p>
-<p class="has-line-data" data-line-start="95" data-line-end="96"><strong>Example Request:</strong></p>
-<pre><code class="has-line-data" data-line-start="98" data-line-end="126">&gt;&gt; import requests
+    <h1 class="code-line" data-line-start="89" data-line-end="90"><a id="Getting_All_Stores_89"></a>Getting All Stores
+    </h1>
+    <p class="has-line-data" data-line-start="91" data-line-end="92"><strong>URL:</strong>
+        <code>https://json.psty.io/api_v1/all_stores</code></p>
+    <p class="has-line-data" data-line-start="93" data-line-end="94"><strong>Request Type:</strong> <code>GET</code></p>
+    <p class="has-line-data" data-line-start="95" data-line-end="96"><strong>Example Request:</strong></p>
+    <pre><code class="has-line-data" data-line-start="98" data-line-end="126">&gt;&gt; import requests
 &gt;&gt; headers = { 'Api-Key': 'API_KEY_HERE' }
 &gt;&gt; res = requests.get('https://json.psty.io/api_v1/all_stores')
 &gt;&gt; print(res.json)
@@ -134,4 +154,6 @@
 }
 </code></pre>
 
-</body></html>
+</body>
+
+</html>
