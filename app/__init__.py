@@ -42,6 +42,7 @@ def make_session_permanent():
     session.permanent = True
     app.permanent_session_lifetime = timedelta(days=90)
     
+
 @app.errorhandler(500):
 def handle_five(e):
     session.clear()
@@ -90,6 +91,8 @@ def index():
         user = mongo.db.free_users.find_one({'current_token': session.get('access_token')})
         if user:
             return redirect(app.config['BASE_URL'] +'/stores', 302)
+        else:
+            return redirect('/', 302)
     else:
         number = mongo.db.free_users.count()
         return render_template('index.html', number=number), 200
