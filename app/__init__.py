@@ -31,6 +31,7 @@ with open('.config.json', 'r+') as file:
         app.config['MONGO_URI'] = config['MONGO_URI']
         app.config['BASE_URL'] = 'https://json.psty.io'
     app.config['SECRET_KEY'] = config['SECRET_KEY']
+    app.config['BASE_URL'] = 'http://localhost:5000'
     if 'AES_KEY' not in config or config['AES_KEY'] == '':
         config['AES_KEY'] = generate_aes_key().decode('latin-1')
         file.seek(0)
@@ -126,8 +127,7 @@ def stores():
                         encrypted_data = store['data']
                         NONCE = keys['nonce']
                         MAC = keys['mac']
-                        source_data = decrypt_str(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
-                        source_json = json.loads(source_data)
+                        source_json = decrypt_str(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
                         template += store_template.format(store_name=store['name'], data=source_json)
             else:
                 template = "<center><h3>No Stores Found. Read the API to learn how to make them!<h3></center>"
@@ -161,8 +161,7 @@ def edit_store(store_name):
     args = parser.parse_args()
     try:
         json.loads(args['data'])        # Making sure input is in json format
-        byte_dat = json.dumps(args['data']).encode()
-        data, NONCE, MAC = encrypt_str(byte_dat, app.config['AES_KEY'])
+        data, NONCE, MAC = encrypt_str(args['data'], app.config['AES_KEY'])
     except:
         return redirect(app.config['BASE_URL'] +'/stores?msg=Bad+JSON+Data', 302)
     if session.get('access_token'):
@@ -185,8 +184,7 @@ def create_store():
     args = parser.parse_args()
     try:
         json.loads(args['data'])        # Making sure input is in json format
-        byte_dat = json.dumps(args['data']).encode()
-        data, NONCE, MAC = encrypt_str(byte_dat, app.config['AES_KEY'])
+        data, NONCE, MAC = encrypt_str(args['data'], app.config['AES_KEY'])
     except:
         return redirect(app.config['BASE_URL'] +'/stores?msg=Bad+JSON+Data', 302)
     name = args['store_name']
@@ -239,8 +237,7 @@ def signup():
         }
         session['access_token'] = access_token
         
-        byte_dat = json.dumps({'key' : 'value'}).encode()
-        data, NONCE, MAC = encrypt_str(byte_dat, app.config['AES_KEY'])
+        data, NONCE, MAC = encrypt_str('{ "key" : "value" }', app.config['AES_KEY'])
         mongo.db.free_users.insert_one(new_user)
         docinsertion = mongo.db.stores.insert_one({
             "name": create_chain(),
@@ -377,8 +374,7 @@ def get_all_api():
                     encrypted_data = v
                     NONCE = keys['nonce']
                     MAC = keys['mac']
-                    source_data = decrypt_str(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
-                    store[k] = json.loads(source_data)
+                    store[k] = decrypt_str(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
                 else:
                     store[k] = v
             store['_id'] = str(store['_id'])
@@ -404,8 +400,7 @@ def get_store_api(store_name):
                         encrypted_data = store['data']
                         NONCE = keys['nonce']
                         MAC = keys['mac']
-                        source_data = decrypt_str(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
-                        store['data'] = json.loads(source_data)
+                        store['data'] = decrypt_str(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
                         store['_id'] = str(store['_id'])
                         requested_store = store
                 else:
@@ -415,9 +410,8 @@ def get_store_api(store_name):
         else:
             return jsonify({"error": "Authorization Error. Please Pass Your Valid Access Token!"}), 403
     elif request.method == 'PUT':
-        data = str(request.get_json())
-        byte_dat = json.dumps(data).encode()
-        data, NONCE, MAC = encrypt_str(byte_dat, app.config['AES_KEY'])
+        data = json.dumps(request.get_json())
+        data, NONCE, MAC = encrypt_str(data, app.config['AES_KEY'])
         user = mhelp.get_user({ 'api_key': args['Api-Key']})
         store = mhelp.get_single_store({'owner': user['email'], 'name': store_name})
         if store and user:
