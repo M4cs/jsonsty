@@ -31,7 +31,6 @@ with open('.config.json', 'r+') as file:
         app.config['MONGO_URI'] = config['MONGO_URI']
         app.config['BASE_URL'] = 'https://json.psty.io'
     app.config['SECRET_KEY'] = config['SECRET_KEY']
-    app.config['BASE_URL'] = 'http://localhost:5000'
     if 'AES_KEY' not in config or config['AES_KEY'] == '':
         config['AES_KEY'] = generate_aes_key().decode('latin-1')
         file.seek(0)
