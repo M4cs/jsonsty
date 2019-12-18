@@ -148,4 +148,6 @@ class APITests(unittest.TestCase):
     def test_a2_clean_up(self):
         print_title('Cleaning Up Database')
         mongo.db.free_users.find_one_and_delete({'email': mock_user.email})
-            
+
+if __name__ == "__main__":
+    unittest.main()            
