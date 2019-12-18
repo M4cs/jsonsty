@@ -1,6 +1,7 @@
 from flask_restful import Resource, reqparse
-from app import mongo, mhelp, create_chain
+from app import app, mongo, mhelp, create_chain
 from app.models.db_helpers import check_token, check_api_key
+from app.models.crypto_helpers import encrypt_str
 from uuid import uuid4
 from flask import session, request
 import json
@@ -15,7 +16,7 @@ class Create(Resource):
     def post(self):
         parser = create_parser()
         args = parser.parse_args()
-        data = request.get_json()
+        data = json.dumps(request.get_json())
         if check_api_key(args['Api-Key']):
             pass
         else:
@@ -27,7 +28,13 @@ class Create(Resource):
         else:
             name = create_chain()
             count = user['store_count'] + 1
-            mongo.db.stores.insert_one({'name': name, 'owner': user['email'], 'data': data})
+            data, NONCE, MAC = encrypt_str('{ "key" : "value" }', app.config['AES_KEY'])
+            docinsertion = mongo.db.stores.insert_one({'name': name, 'owner': user['email'], 'data': data})
+            mongo.db.unique_keys.insert_one({
+                'store_id': docinsertion.inserted_id,
+                'nonce': NONCE,
+                'mac' : MAC
+            })
             stores = mhelp.get_store_ids({'owner': user['email']})
             mongo.db.free_users.update_one({'email': user['email']}, {'$set': { 'store_count': count, 'stores': stores }})
         return { "message": "Success", "name": name }, 200

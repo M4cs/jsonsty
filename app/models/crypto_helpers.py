@@ -18,5 +18,5 @@ def decrypt_str(en_str, NONCE, MAC, AES_KEY):
     ciphertxt = b64decode(en_str)
     cipher = AES.new(AES_KEY, AES.MODE_OCB, NONCE.encode('latin-1'))
     src_str = cipher.decrypt_and_verify(ciphertxt, MAC.encode('latin-1')).decode()
-    src_json = json.loads(src_str)
-    return src_json
+    src_dict = json.loads(json.loads(src_str))
+    return src_dict
