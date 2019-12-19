@@ -116,44 +116,43 @@ def stores():
         u_msg = ''
     if session.get('access_token'):
         user = mongo.db.free_users.find_one({'current_token': session.get('access_token')})
+
         if user:
             template = ""
-            if user['store_count'] > 0:
-                for store in user['stores']:
-                    if store:
-                        store = mongo.db.stores.find_one({'_id': store})
-                        keys = mongo.db.unique_keys.find_one({'store_id' : store['_id']})
-                        encrypted_data = store['data']
-                        NONCE = keys['nonce']
-                        MAC = keys['mac']
-                        source_dict = decrypt_str(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
-                        source_json = json.dumps(source_dict)
-                        template += store_template.format(store_name=store['name'], data=source_json)
-            else:
-                template = "<center><h3>No Stores Found. Read the API to learn how to make them!<h3></center>"
+            for store in user['stores']:
+                store = mongo.db.stores.find_one({'_id': store})
+                keys = mongo.db.unique_keys.find_one({'store_id' : store['_id']})
+                encrypted_data = store['data']
+                NONCE = keys['nonce']
+                MAC = keys['mac']
+                source_dict = decrypt_str(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
+                source_json = json.dumps(source_dict)
+                template += store_template.format(store_name=store['name'], data=source_json)
+            template = template if template != "" else "<center><h3>No Stores Found. Read the API to learn how to make them!<h3></center>"
             return render_template('stores.html', stores=template, msg=msg, color=color, u_msg=u_msg)
         else:
             session.clear()
-    return redirect(app.config['BASE_URL'] +'/login', 302)
+            return redirect(app.config['BASE_URL'] +'/login', 302)
 
 @app.route('/stores/<store_name>/delete', methods=['GET'])
 def del_store(store_name):
     if session.get('access_token'):
         user = mongo.db.free_users.find_one({ 'current_token': session.get('access_token')})
         if user:
-            stores = mhelp.get_stores({'owner': user['email']})
-            for store in stores:
-                if store['name'] == store_name:
-                    mongo.db.stores.find_one_and_delete({'_id': store['_id']})
-                    mongo.db.unique_keys.find_one_and_delete({'store_id': store['_id']})
-                    store_ids = [store for store in mhelp.get_store_ids({'owner': user['email']})]
-                    mongo.db.free_users.find_one_and_update({'_id': user['_id']}, { '$set': { 'store_count': user['store_count'] - 1, 'stores': store_ids}})
-                    return redirect(app.config['BASE_URL'] +'/stores?umsg=Store+Deleted+Successfully&color=green', 302)
-            return redirect(app.config['BASE_URL'] +'/stores', 302)
+            store = mhelp.get_single_store({'owner': user['email'], 'name': store_name})
+            if not store:
+               return redirect(app.config['BASE_URL'] +'/stores', 302)
+
+            mongo.db.stores.find_one_and_delete({'_id': store['_id']})
+            mongo.db.unique_keys.find_one_and_delete({'store_id': store['_id']})
+            store_ids = [store for store in mhelp.get_store_ids({'owner': user['email']})]
+            mongo.db.free_users.find_one_and_update({'_id': user['_id']}, { '$set': { 'store_count': user['store_count'] - 1, 'stores': store_ids}})
+            return redirect(app.config['BASE_URL'] +'/stores?umsg=Store+Deleted+Successfully&color=green', 302)
         else:
             session.clear()
             return redirect(app.config['BASE_URL'] +'/login', 302)
-    return redirect(app.config['BASE_URL'] +'/login', 302)
+    else:
+        return redirect(app.config['BASE_URL'] +'/login', 302)
 
 @app.route('/stores/<store_name>/edit', methods=['POST'])
 def edit_store(store_name):
@@ -166,17 +165,18 @@ def edit_store(store_name):
         return redirect(app.config['BASE_URL'] +'/stores?msg=Bad+JSON+Data', 302)
     if session.get('access_token'):
         user = mongo.db.free_users.find_one({ 'current_token': session.get('access_token')})
-        if user:
-            for store in user['stores']:
-                store = mhelp.get_single_store({ '_id': store })
-                if store['name'] == store_name:
-                    mongo.db.stores.find_one_and_update({'_id': store['_id']}, {'$set': { 'data': data}})
-                    mongo.db.unique_keys.find_one_and_update({'store_id': store['_id']}, {'$set': { 'nonce': NONCE}})
-                    mongo.db.unique_keys.find_one_and_update({'store_id': store['_id']}, {'$set': { 'mac': MAC}})
+        store = mhelp.get_single_store({'owner': user['email'], 'name': store_name})
+        if user and store:
+            mongo.db.stores.find_one_and_update({'_id': store['_id']}, {'$set': { 'data': data}})
+            mongo.db.unique_keys.find_one_and_update({'store_id': store['_id']}, {'$set': { 'nonce': NONCE}})
+            mongo.db.unique_keys.find_one_and_update({'store_id': store['_id']}, {'$set': { 'mac': MAC}})
             return redirect(app.config['BASE_URL'] +'/stores?umsg=Store+Updated&color=green', 302)
+        elif not store and user:
+            return redirect(app.config['BASE_URL'] +'/stores', 302)
         else:
             return redirect(app.config['BASE_URL'] +'/login', 302)
-    return redirect(app.config['BASE_URL'] +'/login', 302)
+    else:
+        return redirect(app.config['BASE_URL'] +'/login', 302)
 
 @app.route('/stores/create', methods=['POST'])
 def create_store():
@@ -191,10 +191,10 @@ def create_store():
     if session.get('access_token'):
         user = mongo.db.free_users.find_one({ 'current_token': session.get('access_token')})
         if user:
-            for store in user['stores']:
-                store = mhelp.get_single_store({ '_id': store})
-                if store['name'] == name:
-                    return redirect(app.config['BASE_URL'] +'/stores?msg=Name+In+Use+Already', 302)
+            store = mongo.db.stores.find_one({ 'owner': user['email'], 'name': name})
+            if store:
+               return redirect(app.config['BASE_URL'] +'/stores?msg=Name+In+Use+Already', 302)
+
             docinsertion = mongo.db.stores.insert_one({
                 'owner': user['email'],
                 'name': name,
@@ -210,7 +210,8 @@ def create_store():
             return redirect(app.config['BASE_URL'] +'/stores?umsg=Store+Created+Successfully&color=green', 302)
         else:
             session.clear()
-    return redirect(app.config['BASE_URL'] + '/login')
+    else:
+        return redirect(app.config['BASE_URL'] +'/login', 302)
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -269,18 +270,17 @@ def login():
         else:
             pass
         user = mhelp.get_user({'email': args['email']})
-        if user:
-            if check_password_hash(user.get('password'), args['password']):
-                access_token = str(uuid4())
-                user.pop('current_token')
-                mongo.db.free_users.find_one_and_update({'email': args['email']}, {'$set': { 'current_token': access_token } })
-                session['access_token'] = access_token
-            else:
-                return render_template('login.html', error="Incorrect Password!"), 200
-        else:
+        if user and check_password_hash(user.get('password'), args['password']):
+            access_token = str(uuid4())
+            user.pop('current_token')
+            mongo.db.free_users.find_one_and_update({'email': args['email']}, {'$set': { 'current_token': access_token } })
+            session['access_token'] = access_token
+            return redirect(app.config['BASE_URL'] +'/stores', 302)
+        elif not user:
             session.clear()
             return render_template('login.html', error="Something Broke. Try Again Later."), 200
-        return redirect(app.config['BASE_URL'] +'/stores', 302)
+        else:
+            return render_template('login.html', error="Incorrect Password!"), 200
     elif request.method == 'GET':
         if session.get('access_token'):
             user = mhelp.get_user({'current_token': session.get('access_token')})
@@ -334,13 +334,27 @@ def change_password():
         args = parser.parse_args()
         if session.get('access_token'):
             user = mhelp.get_user({ 'current_token': session['access_token']})
-            if user:
-                if check_password_hash(user['password'], args['old_password']):
-                    if args['new_password'] == args['confirm_password']:
-                        new_pw_hash = generate_password_hash(args['new_password'], method="sha256", salt_length=16)
-                        mongo.db.free_users.find_one_and_update({'_id': user['_id']}, {'$set': { 'password': new_pw_hash }})
-                        return redirect(app.config['BASE_URL'] +'/account', 302)
-    return redirect(app.config['BASE_URL'] +'/login')
+            if (user and
+                    check_password_hash(user['password'], args['old_password']) and
+                    args['new_password'] == args['confirm_password']):
+                new_pw_hash = generate_password_hash(args['new_password'], method="sha256", salt_length=16)
+                mongo.db.free_users.find_one_and_update({'_id': user['_id']}, {'$set': { 'password': new_pw_hash }})
+                return redirect(app.config['BASE_URL'] +'/account', 302)
+            elif (not user and
+                    check_password_hash(user['password'], args['old_password']) and
+                    args['new_password'] == args['confirm_password']):
+                session.clear()
+                return render_template('login.html', error="Something Broke. Try Again Later."), 200
+            elif (user and 
+                    not check_password_hash(user['password'], args['old_password']) and 
+                    args['new_password'] == args['confirm_password']):
+                return render_template('login.html', error="Incorrect Password!"), 200
+            elif (user and 
+                    check_password_hash(user['password'], args['old_password']) and 
+                    not args['new_password'] == args['confirm_password']):
+                return render_template('login.html', error="Incorrect Password!"), 200
+        else:
+            return redirect(app.config['BASE_URL'] +'/login')
 
 @app.route('/api_documentation')
 def docs():
