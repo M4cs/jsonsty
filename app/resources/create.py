@@ -27,6 +27,9 @@ class CreateStore(Resource):
             return {"error": "Reached 100 store maximum!"}, 403
         else:
             name = create_chain()
+            store = mhelp.get_single_store({'owner': user['email'], 'name': name})
+            if store:
+               return { "error": "Name in use already" }, 403
             count = user['store_count'] + 1
             data, NONCE, MAC = encrypt_str('{ "key" : "value" }', app.config['AES_KEY'])
             docinsertion = mongo.db.stores.insert_one({'name': name, 'owner': user['email'], 'data': data})
