@@ -26,10 +26,10 @@ with open('.config.json', 'r+') as file:
     app.config['RECAPTCHA_SECRET_KEY'] = config['RECAPTCHA_SECRET_KEY']
     if os.environ.get('JSON_TESTING') == 'True':
         app.config['MONGO_URI'] = config['TEST_MONGO_URI']
-        app.config['BASE_URL'] = 'http://localhost:5000'
+        app.config['BASE_URL'] = config['BASE_URL_TEST']
     else:
         app.config['MONGO_URI'] = config['MONGO_URI']
-        app.config['BASE_URL'] = 'https://json.psty.io'
+        app.config['BASE_URL'] = config['BASE_URL']
     app.config['SECRET_KEY'] = config['SECRET_KEY']
     if 'AES_KEY' not in config or config['AES_KEY'] == '':
         config['AES_KEY'] = generate_aes_key().decode('latin-1')
@@ -217,7 +217,6 @@ def signup():
     if request.method == 'POST':
         parser = signup_parser()
         args = parser.parse_args()
-        print(recaptcha.verify())
         if not recaptcha.verify():
             return render_template('signup.html', error="ReCaptcha Failed!")
         result = check_email(args['email'])
@@ -255,7 +254,7 @@ def signup():
                 stores.append(ObjectId(store.get('_id')))
         mongo.db.free_users.find_one_and_update({'email': new_user['email']}, {'$set': { 'stores': stores }})
         
-        return redirect(app.config['BASE_URL'] +'/stores', 302)
+        return redirect(app.config['BASE_URL'] + '/stores', 302)
     elif request.method == "GET":
         return render_template('signup.html'), 200
     
@@ -359,147 +358,13 @@ def docs():
 def serve_assets(folder, file):
     return send_file('templates/assets/{}/{}'.format(folder, file))
 
-@app.route('/api_v1/all_stores', methods=['GET'])
-def get_all_api():
-    parser = get_parser()
-    args = parser.parse_args()
-    print(args['Api-Key'])
-    user = mhelp.get_user({ 'api_key': args['Api-Key']})
-    if user:
-        stores = mhelp.get_stores({'owner': user['email']})
-        for store in stores:
-            for k, v in store.items():
-                if k == 'data':
-                    keys = mongo.db.unique_keys.find_one({'store_id' : store['_id']})
-                    encrypted_data = v
-                    NONCE = keys['nonce']
-                    MAC = keys['mac']
-                    store[k] = decrypt_str(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
-                else:
-                    store[k] = v
-            store['_id'] = str(store['_id'])
-        return jsonify({'stores': stores}), 200
-    else:
-        return jsonify({ "error": "You must authorize first. Please login or signup."}), 403
+from app.resources import CreateStore, SingleStore, JSONLogin, GetAllStores
 
-@app.route('/api_v1/stores/<store_name>', methods=['GET', 'PUT', 'DELETE'])
-def get_store_api(store_name):
-    parser = get_parser()
-    args = parser.parse_args()
-    if request.method == 'GET':
-        user = mhelp.get_user({ 'api_key': args['Api-Key']})
-        if user:
-            stores = mhelp.get_stores({'owner': user['email']})
-            requested_store = None
-            for store in stores:
-                if store['name'] == store_name:
-                    if requested_store is not None:
-                        return jsonify({ 'error': 'Multiple Stores Found With This Name! This should never happen.' }), 500
-                    else:
-                        keys = mongo.db.unique_keys.find_one({'store_id' : store['_id']})
-                        encrypted_data = store['data']
-                        NONCE = keys['nonce']
-                        MAC = keys['mac']
-                        store['data'] = decrypt_str(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
-                        store['_id'] = str(store['_id'])
-                        requested_store = store
-                else:
-                    pass
-            if requested_store:
-                return jsonify(requested_store), 200
-        else:
-            return jsonify({"error": "Authorization Error. Please Pass Your Valid Access Token!"}), 403
-    elif request.method == 'PUT':
-        data = json.dumps(request.get_json())
-        data, NONCE, MAC = encrypt_str(data, app.config['AES_KEY'])
-        user = mhelp.get_user({ 'api_key': args['Api-Key']})
-        store = mhelp.get_single_store({'owner': user['email'], 'name': store_name})
-        if store and user:
-            mongo.db.unique_keys.find_one_and_update({'store_id': store['_id']}, {'$set': { 'nonce': NONCE}})
-            mongo.db.unique_keys.find_one_and_update({'store_id': store['_id']}, {'$set': { 'mac': MAC}})
-            mongo.db.stores.find_one_and_update({'owner': user['email'], 'name': store_name}, {'$set': {'data': data}})
-            return jsonify({ "message": "Updated Store." }), 200
-        elif store and not user:
-            return jsonify({ "error": "Store Not Found" }), 404
-        else:
-            return jsonify({ "error": "Authorization Error. Please Pass Your Valid Access Token!"}), 403
-    elif request.method == 'DELETE':
-        user = mhelp.get_user({ 'api_key': args['Api-Key']})
-        if user:
-            stores = mhelp.get_stores({'owner': user['email']})
-            requested_store = None
-            for store in stores:
-                if store['name'] == store_name:
-                    mongo.db.stores.find_one_and_delete({'_id': store['_id']})
-                    mongo.db.unique_keys.find_one_and_delete({'store_id': store['_id']})
-                    old_stores = mhelp.get_store_ids({'owner': user['email']})
-                    mongo.db.free_users.find_one_and_update({'email': user['email'] }, { '$set': {'stores': old_stores, 'store_count': user['store_count'] - 1}})
-                    return jsonify({ 'message': 'Success' }), 200
-                else:
-                    pass
-            return jsonify({ "message": "Store Not Found" }), 404
-        else:
-            return jsonify({"error": "Authorization Error. Please Pass Your Valid Access Token!"}), 403
-
-@app.route('/api_v1/signup', methods=['POST'])
-def signup_api():
-    parser = signup_parser()
-    args = parser.parse_args()
-    result = check_email(args['email'])
-    if not result:
-        pass
-    else:
-        return jsonify({"error" : "Email In Use!"})
-    pw_hash = generate_password_hash(args['password'], method="sha256", salt_length=16)
-    access_token = str(uuid4())
-    new_user = {
-        "email": args["email"],
-        "password": pw_hash,
-        "date_created": datetime.now(),
-        "store_count": 1,
-        "current_token": access_token,
-        "api_key": str(uuid4())
-    }
-
-    data, NONCE, MAC = encrypt_str('{ "key" : "value" }', app.config['AES_KEY'])
-    mongo.db.free_users.insert_one(new_user)
-    docinsertion = mongo.db.stores.insert_one({
-        "name": create_chain(),
-        "owner": new_user['email'],
-        "data": data
-    })
-    mongo.db.unique_keys.insert_one({
-        'store_id': docinsertion.inserted_id,
-        'nonce': NONCE,
-        'mac' : MAC
-    })
-    stores = []
-    for store in mongo.db.stores.find():
-        if store.get('owner') == new_user['email']:
-            stores.append(ObjectId(store.get('_id')))
-    mongo.db.free_users.find_one_and_update({'email': new_user['email']}, {'$set': { 'stores': stores }})
-    return jsonify({"message": "Signed Up!"}), 200    
-
-@app.route('/api_v1/login', methods=['POST'])
-def login_api():
-    parser = signup_parser()
-    args = parser.parse_args()
-    result = check_email(args['email'])
-    if not result:
-        return {"error": "No Account with that E-Mail Exists!"}, 403
-    else:
-        pass
-    user = mhelp.get_user({'email': args['email']})
-    if user:
-        if check_password_hash(user.get('password'), args['password']):
-            access_token = str(uuid4())
-            mongo.db.free_users.find_one_and_update({'email': args['email']}, {'$set': { 'current_token': access_token } })
-        else:
-            return jsonify({ "error": "Incorrect Password!" }), 403
-    else:
-        return jsonify({"error": "Something broke"}), 500
-    return jsonify({"message": "Logged In!", "api-key": user['api_key']}), 200
-
-from app.resources import Create
-
-api.add_resource(Create, '/api_v1/create')
+print('Adding CreateStore')
+api.add_resource(CreateStore, '/api_v1/create')
+print('Adding GetAll')
+api.add_resource(GetAllStores, '/api_v1/all_stores')
+print('Adding Single')
+api.add_resource(SingleStore, '/api_v1/stores/<store_name>')
+print('Adding Login')
+api.add_resource(JSONLogin, '/api_v1/login')

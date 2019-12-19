@@ -12,7 +12,7 @@ def create_parser():
     return parser
 
 
-class Create(Resource):
+class CreateStore(Resource):
     def post(self):
         parser = create_parser()
         args = parser.parse_args()

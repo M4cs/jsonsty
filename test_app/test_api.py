@@ -30,12 +30,13 @@ class APITests(unittest.TestCase):
         
     def test_1_signup(self):
         print_title('Testing Signup')
-        res = self.app.post('/api_v1/signup', data={
+        res = self.app.post('/signup', data={
             'email': mock_user.email,
             'password': mock_user.password
+        }, headers={
+            'Content-Type': 'application/x-www-form-urlencoded'
         })
         self.assertTrue(res.status_code, 200)
-        self.assertTrue(res.json, json.dumps({'message': 'Signed Up!'}))
         mock_user.count += 1
         
     def test_2_login(self):
@@ -100,18 +101,18 @@ class APITests(unittest.TestCase):
         self.assertTrue(res.status_code == 200)
         self.assertNotEqual(mock_user.store_template, data)
     
-    # def test_a1_delete_stores(self):
-    #     print_title('Testing DELETE on Store (Delete)')
-    #     res = self.app.get('/api_v1/all_stores', headers={'Api-Key': mock_user.api_key})
-    #     data = json.loads(res.data)
-    #     for store in data['stores']:
-    #         res = self.app.delete('/api_v1/stores/{}'.format(store['name']), headers={'Api-Key': mock_user.api_key})
-    #         self.assertTrue(res.status_code == 200)
-    #         self.assertTrue(res.json == { 'message': 'Success' })
+    def test_a1_delete_stores(self):
+        print_title('Testing DELETE on Store (Delete)')
+        res = self.app.get('/api_v1/all_stores', headers={'Api-Key': mock_user.api_key})
+        data = json.loads(res.data)
+        for store in data['stores']:
+            res = self.app.delete('/api_v1/stores/{}'.format(store['name']), headers={'Api-Key': mock_user.api_key})
+            self.assertTrue(res.status_code == 200)
+            self.assertTrue(res.json == { 'message': 'Success' })
             
-    # def test_a2_clean_up(self):
-    #     print_title('Cleaning Up Database')
-    #     mongo.db.free_users.find_one_and_delete({'email': mock_user.email})
+    def test_a2_clean_up(self):
+        print_title('Cleaning Up Database')
+        mongo.db.free_users.find_one_and_delete({'email': mock_user.email})
 
 if __name__ == "__main__":
     unittest.main()            
