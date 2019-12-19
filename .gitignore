@@ -2,3 +2,4 @@
 **/__pycache__
 jsonsty.egg-info
 .env
+.vscode
