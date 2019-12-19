@@ -27,7 +27,7 @@ class CreateStore(Resource):
             return {"error": "Reached 100 store maximum!"}, 403
         else:
             name = create_chain()
-            store = mhelp.get_single_store({'owner': user['email'], 'name': store_name})
+            store = mhelp.get_single_store({'owner': user['email'], 'name': name})
             if store:
                return { "error": "Name in use already" }, 403
             count = user['store_count'] + 1
