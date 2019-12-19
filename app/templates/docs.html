@@ -27,6 +27,34 @@
             href="https://json.psty.io/account">https://json.psty.io/account</a></p>
     <p class="has-line-data" data-line-start="10" data-line-end="11">Authorize with the API by passing
         <code>Api-Key</code> with your API key as the value in all of your headers.</p>
+        <h1 class="code-line" data-line-start="89" data-line-end="90"><a id="Getting_All_Stores_89"></a>Getting Single Store
+        </h1>
+        <p class="has-line-data" data-line-start="91" data-line-end="92"><strong>URL:</strong>
+            <code>https://json.psty.io/api_v1/store/&lt;store_name&gt;</code></p>
+        <p class="has-line-data" data-line-start="93" data-line-end="94"><strong>Request Type:</strong> <code>GET</code></p>
+        <p class="has-line-data" data-line-start="95" data-line-end="96"><strong>Example Request:</strong></p>
+        <pre><code class="has-line-data" data-line-start="98" data-line-end="126">&gt;&gt; import requests
+        &gt;&gt; headers = { 'Api-Key': 'API_KEY_HERE' }
+        &gt;&gt; res = requests.get('https://json.psty.io/api_v1/store/ChickenTurtleBlind')
+        &gt;&gt; print(res.json)
+        {
+        "stores": [
+        {
+          "_id": "5df487587605c3bac616ed55",
+          "data": {
+            "test_data": {
+              "test_array": [
+                "test_val1",
+                "test_val2"
+              ]
+            }
+          },
+          "name": "ChickenTurtleBlind",
+          "owner": "test@example.com"
+        }
+        ]
+        }
+        </code></pre>
     <h1 class="code-line" data-line-start="12" data-line-end="13"><a id="Creating_A_Store_12"></a>Creating A Store</h1>
     <p class="has-line-data" data-line-start="14" data-line-end="15"><strong>URL:</strong>
         <code>https://json.psty.io/api_v1/create</code></p>
@@ -153,34 +181,7 @@
   ]
 }
 </code></pre>
-<h1 class="code-line" data-line-start="89" data-line-end="90"><a id="Getting_All_Stores_89"></a>Getting Single Stores
-</h1>
-<p class="has-line-data" data-line-start="91" data-line-end="92"><strong>URL:</strong>
-    <code>https://json.psty.io/api_v1/store/&lt;store_name&gt;</code></p>
-<p class="has-line-data" data-line-start="93" data-line-end="94"><strong>Request Type:</strong> <code>GET</code></p>
-<p class="has-line-data" data-line-start="95" data-line-end="96"><strong>Example Request:</strong></p>
-<pre><code class="has-line-data" data-line-start="98" data-line-end="126">&gt;&gt; import requests
-&gt;&gt; headers = { 'Api-Key': 'API_KEY_HERE' }
-&gt;&gt; res = requests.get('https://json.psty.io/api_v1/store/ChickenTurtleBlind')
-&gt;&gt; print(res.json)
-{
-"stores": [
-{
-  "_id": "5df487587605c3bac616ed55",
-  "data": {
-    "test_data": {
-      "test_array": [
-        "test_val1",
-        "test_val2"
-      ]
-    }
-  },
-  "name": "ChickenTurtleBlind",
-  "owner": "test@example.com"
-}
-]
-}
-</code></pre>
+
 </body>
 
 </html>
