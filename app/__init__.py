@@ -26,10 +26,10 @@ with open('.config.json', 'r+') as file:
     app.config['RECAPTCHA_SECRET_KEY'] = config['RECAPTCHA_SECRET_KEY']
     if os.environ.get('JSON_TESTING') == 'True':
         app.config['MONGO_URI'] = config['TEST_MONGO_URI']
-        app.config['BASE_URL'] = 'http://localhost:5000'
+        app.config['BASE_URL'] = config['BASE_URL_TEST']
     else:
         app.config['MONGO_URI'] = config['MONGO_URI']
-        app.config['BASE_URL'] = 'https://json.psty.io'
+        app.config['BASE_URL'] = config['BASE_URL']
     app.config['SECRET_KEY'] = config['SECRET_KEY']
     if 'AES_KEY' not in config or config['AES_KEY'] == '':
         config['AES_KEY'] = generate_aes_key().decode('latin-1')
@@ -217,7 +217,6 @@ def signup():
     if request.method == 'POST':
         parser = signup_parser()
         args = parser.parse_args()
-        print(recaptcha.verify())
         if not recaptcha.verify():
             return render_template('signup.html', error="ReCaptcha Failed!")
         result = check_email(args['email'])
@@ -255,7 +254,7 @@ def signup():
                 stores.append(ObjectId(store.get('_id')))
         mongo.db.free_users.find_one_and_update({'email': new_user['email']}, {'$set': { 'stores': stores }})
         
-        return redirect(app.config['BASE_URL'] +'/stores', 302)
+        return redirect(app.config['BASE_URL'] + '/stores', 302)
     elif request.method == "GET":
         return render_template('signup.html'), 200
     
