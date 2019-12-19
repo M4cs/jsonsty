@@ -24,12 +24,11 @@ class JSONLogin(Resource):
         else:
             pass
         user = mhelp.get_user({'email': args['email']})
-        if user:
-            if check_password_hash(user.get('password'), args['password']):
-                access_token = str(uuid4())
-                mongo.db.free_users.find_one_and_update({'email': args['email']}, {'$set': { 'current_token': access_token } })
-            else:
-                return { "error": "Incorrect Password!" }, 403
-        else:
+        if user and check_password_hash(user.get('password'), args['password']):
+            access_token = str(uuid4())
+            mongo.db.free_users.find_one_and_update({'email': args['email']}, {'$set': { 'current_token': access_token } })
+            return {"message": "Logged In!", "api-key": user['api_key']}, 200
+        elif not user:
             return {"error": "Something broke"}, 500
-        return {"message": "Logged In!", "api-key": user['api_key']}, 200
+        else:
+            return { "error": "Incorrect Password!" }, 403
