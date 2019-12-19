@@ -30,12 +30,13 @@ class APITests(unittest.TestCase):
         
     def test_1_signup(self):
         print_title('Testing Signup')
-        res = self.app.post('/api_v1/signup', data={
+        res = self.app.post('/signup', data={
             'email': mock_user.email,
             'password': mock_user.password
+        }, headers={
+            'Content-Type': 'application/x-www-form-urlencoded'
         })
         self.assertTrue(res.status_code, 200)
-        self.assertTrue(res.json, json.dumps({'message': 'Signed Up!'}))
         mock_user.count += 1
         
     def test_2_login(self):
@@ -45,6 +46,7 @@ class APITests(unittest.TestCase):
             'password': mock_user.password
         })
         data = json.loads(res.data)
+        print(data)
         self.assertTrue(res.status_code, 200)
         self.assertIsNotNone(data['api-key'])
         mock_user.api_key = data['api-key']
@@ -83,43 +85,6 @@ class APITests(unittest.TestCase):
         self.assertEqual(len(data['stores']), 2)
         for store in data['stores']:
             self.assertEqual(store['owner'], mock_user.email)
-        mock_user.count += 1
-            
-    def test_6_create_third_store(self):
-        print_title('Testing Third Store Creation')
-        res = self.app.post('/api_v1/create', headers={
-                'Api-Key': mock_user.api_key,
-                'Content-Type': 'application/json'
-            },
-            data=json.dumps(mock_user.store_template)
-        )
-        data = json.loads(res.data)
-        self.assertTrue(res.status_code, 200)
-        self.assertTrue(data['message'] == 'Success')
-        self.assertIsNotNone(data['name'])
-        mock_user.count += 1
-    
-    def test_7_get_all_stores_with_three(self):
-        print_title('Testing Get All Stores With Three Stores')
-        res = self.app.get('/api_v1/all_stores', headers={'Api-Key': mock_user.api_key})
-        data = json.loads(res.data)
-        self.assertTrue(res.status_code, 200)
-        self.assertEqual(len(data['stores']), 3)
-        for store in data['stores']:
-            self.assertEqual(store['owner'], mock_user.email)
-        mock_user.count += 1
-            
-    def test_8_max_at_three(self):
-        print_title('Testing Max Cap at 3 Stores')
-        res = self.app.post('/api_v1/create', headers={
-                'Api-Key': mock_user.api_key,
-                'Content-Type': 'application/json'
-            },
-            data=json.dumps(mock_user.store_template)
-        )
-        data = json.loads(res.data)
-        self.assertTrue(res.status_code, 403)
-        self.assertTrue(data['error'] == 'Reached 3 store maximum!')
         mock_user.count += 1
     
     def test_9_edit_store(self):
