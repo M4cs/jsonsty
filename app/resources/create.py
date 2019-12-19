@@ -1,7 +1,7 @@
 from flask_restful import Resource, reqparse
 from app import app, mongo, mhelp, create_chain
-from app.models.db_helpers import check_token, check_api_key
-from app.models.crypto_helpers import encrypt_str
+from app.helpers.db_helpers import check_token, check_api_key
+from app.helpers.crypto_helpers import encrypt_str
 from uuid import uuid4
 from flask import session, request
 import json

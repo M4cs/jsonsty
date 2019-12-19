@@ -6,14 +6,16 @@ from jinja2 import Markup, escape
 from flask_pymongo import PyMongo
 from uuid import uuid4
 from bson import ObjectId
-from app.models.db_helpers import check_email, check_token, ModelHelpers
-from app.models.crypto_helpers import generate_aes_key, encrypt_str, decrypt_str
+from app.helpers.db_helpers import check_email, check_token, ModelHelpers
+from app.helpers.email_helper import verify_email
+from app.helpers.crypto_helpers import generate_aes_key, encrypt_str, decrypt_str
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 from app.html_templates import store_template
 import json
 import os
 import random
+import re
 
 app = Flask(__name__)
 api = Api(app)
@@ -221,10 +223,15 @@ def signup():
         if not recaptcha.verify():
             return render_template('signup.html', error="ReCaptcha Failed!")
         result = check_email(args['email'])
+        vresult = verify_email(args['email'])
         if not result:
             pass
         else:
             return render_template('signup.html', error="Email In Use!")
+        if vresult:
+            pass
+        else:
+            return render_template('signup.html', error="Use a real email!")
         pw_hash = generate_password_hash(args['password'], method="sha256", salt_length=16)
         access_token = str(uuid4())
         new_user = {
