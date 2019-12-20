@@ -1,7 +1,7 @@
 from flask_restful import Resource, reqparse
 from flask import request
 from app import app, mongo, mhelp
-from app.models.crypto_helpers import decrypt_str, encrypt_str
+from app.helpers.crypto_helpers import decrypt_str, encrypt_str
 import json
 
 def get_parser():

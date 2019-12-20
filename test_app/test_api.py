@@ -46,7 +46,6 @@ class APITests(unittest.TestCase):
             'password': mock_user.password
         })
         data = json.loads(res.data)
-        print(data)
         self.assertTrue(res.status_code, 200)
         self.assertIsNotNone(data['api-key'])
         mock_user.api_key = data['api-key']
@@ -54,10 +53,8 @@ class APITests(unittest.TestCase):
         
     def test_3_get_all_stores(self):
         print_title('Testing Get All Stores')
-        print(mock_user.api_key)
         res = self.app.get('/api_v1/all_stores', headers={'Api-Key': mock_user.api_key})
         data = json.loads(res.data)
-        print(res.data)
         self.assertTrue(res.status_code, 200)
         for store in data['stores']:
             self.assertEqual(store['owner'], mock_user.email)
