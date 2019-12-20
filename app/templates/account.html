@@ -29,6 +29,7 @@
     <a href="/stores"><button class="button">View Stores</button></a>
     <label for="password_change"><h2>Change Password:</h2></label>
     <form action="/change_password" method="POST">
+        <p style="color: red;">{{error}}</p>
         <input type="password" name="old_password" id="password_change" placeholder="Old Password" required>
         <input type="password" name="new_password" id="password_change" placeholder="New Password" required>
         <input type="password" name="confirm_password" id="password_change" placeholder="Confirm Password" required>

@@ -15,7 +15,6 @@ from app.html_templates import store_template
 import json
 import os
 import random
-import re
 
 app = Flask(__name__)
 api = Api(app)
@@ -355,11 +354,11 @@ def change_password():
             elif (user and 
                     not check_password_hash(user['password'], args['old_password']) and 
                     args['new_password'] == args['confirm_password']):
-                return render_template('login.html', error="Incorrect Password!"), 200
+                return render_template('account.html', error="Incorrect Password!"), 200
             elif (user and 
                     check_password_hash(user['password'], args['old_password']) and 
                     not args['new_password'] == args['confirm_password']):
-                return render_template('login.html', error="Incorrect Password!"), 200
+                return render_template('account.html', error="Passwords do not match!"), 200
         else:
             return redirect(app.config['BASE_URL'] +'/login')
 
