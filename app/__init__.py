@@ -15,7 +15,7 @@ from app.html_templates import store_template
 import json
 import os
 import random
-import re
+import urllib.parse as urlparse
 
 app = Flask(__name__)
 api = Api(app)
@@ -26,7 +26,8 @@ with open('.config.json', 'r+') as file:
     app.config['RECAPTCHA_ENABLED'] = config['RECAPTCHA_ENABLED']
     app.config['RECAPTCHA_SITE_KEY'] = config['RECAPTCHA_SITE_KEY']
     app.config['RECAPTCHA_SECRET_KEY'] = config['RECAPTCHA_SECRET_KEY']
-    if os.environ.get('JSON_TESTING') == 'True':
+    app.config['TESTING'] = config['TESTING']
+    if app.config['TESTING'] == 'True':
         app.config['MONGO_URI'] = config['TEST_MONGO_URI']
         app.config['BASE_URL'] = config['BASE_URL_TEST']
     else:
@@ -118,7 +119,6 @@ def stores():
         u_msg = ''
     if session.get('access_token'):
         user = mongo.db.free_users.find_one({'current_token': session.get('access_token')})
-
         if user:
             template = ""
             for store in user['stores']:
@@ -129,7 +129,7 @@ def stores():
                 MAC = keys['mac']
                 source_dict = decrypt_str(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
                 source_json = json.dumps(source_dict)
-                template += store_template.format(store_name=store['name'], data=source_json)
+                template += store_template.format(store_name=store['name'], store_name_url=urlparse.quote_plus(store['name']), data=source_json)
             template = template if template != "" else "<center><h3>No Stores Found. Read the API to learn how to make them!<h3></center>"
             return render_template('stores.html', stores=template, msg=msg, color=color, u_msg=u_msg)
         else:
@@ -138,6 +138,7 @@ def stores():
 
 @app.route('/stores/<store_name>/delete', methods=['GET'])
 def del_store(store_name):
+    store_name = urlparse.unquote_plus(store_name)
     if session.get('access_token'):
         user = mongo.db.free_users.find_one({ 'current_token': session.get('access_token')})
         if user:
@@ -160,6 +161,7 @@ def del_store(store_name):
 def edit_store(store_name):
     parser = update_parser()
     args = parser.parse_args()
+    store_name = urlparse.unquote_plus(store_name)
     try:
         json.loads(args['data'])        # Making sure input is in json format
         data, NONCE, MAC = encrypt_str(args['data'], app.config['AES_KEY'])
@@ -189,7 +191,7 @@ def create_store():
         data, NONCE, MAC = encrypt_str(args['data'], app.config['AES_KEY'])
     except:
         return redirect(app.config['BASE_URL'] +'/stores?msg=Bad+JSON+Data', 302)
-    name = args['store_name']
+    name = args['store_name'].strip()
     if session.get('access_token'):
         user = mongo.db.free_users.find_one({ 'current_token': session.get('access_token')})
         if user:
@@ -228,7 +230,7 @@ def signup():
             pass
         else:
             return render_template('signup.html', error="Email In Use!")
-        if vresult:
+        if vresult or app.config['TESTING'] == 'True':
             pass
         else:
             return render_template('signup.html', error="Use a real email!")
