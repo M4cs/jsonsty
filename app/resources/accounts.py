@@ -2,7 +2,6 @@ from flask_restful import Resource, reqparse
 from app.helpers.db_helpers import check_email
 from werkzeug.security import check_password_hash, generate_password_hash
 from app import app, mongo, mhelp, create_chain
-from app.helpers.crypto_helpers import encrypt_str
 from uuid import uuid4
 from bson import ObjectId
 from datetime import datetime

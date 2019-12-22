@@ -1,7 +1,7 @@
 from flask_restful import Resource, reqparse
 from app import app, mongo, mhelp, create_chain
 from app.helpers.db_helpers import check_token, check_api_key
-from app.helpers.crypto_helpers import encrypt_str
+from app.helpers.crypto_helpers import encrypt_and_encode
 from uuid import uuid4
 from flask import session, request
 import json
@@ -32,7 +32,7 @@ class CreateStore(Resource):
             if store:
                return { "error": "Name in use already" }, 403
             count = user['store_count'] + 1
-            data, NONCE, MAC = encrypt_str('{ "key" : "value" }', app.config['AES_KEY'])
+            data, NONCE, MAC = encrypt_and_encode('{ "key" : "value" }', app.config['AES_KEY'])
             docinsertion = mongo.db.stores.insert_one({'name': store_name, 'owner': user['email'], 'data': data})
             mongo.db.unique_keys.insert_one({
                 'store_id': docinsertion.inserted_id,

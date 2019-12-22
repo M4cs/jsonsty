@@ -1,14 +1,13 @@
 from flask import Flask, jsonify, session, request, redirect, render_template, send_file
 from flask_recaptcha import ReCaptcha
 from flask_restful import reqparse, Api
-from validate_email import validate_email
 from jinja2 import Markup, escape
 from flask_pymongo import PyMongo
 from uuid import uuid4
 from bson import ObjectId
 from app.helpers.db_helpers import check_email, check_token, ModelHelpers
 from app.helpers.email_helper import verify_email
-from app.helpers.crypto_helpers import generate_aes_key, encrypt_str, decrypt_str
+from app.helpers.crypto_helpers import generate_aes_key, encrypt_and_encode, decode_and_decrypt
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 from app.html_templates import store_template
@@ -127,7 +126,7 @@ def stores():
                 encrypted_data = store['data']
                 NONCE = keys['nonce']
                 MAC = keys['mac']
-                source_dict = decrypt_str(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
+                source_dict = decode_and_decrypt(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
                 source_json = json.dumps(source_dict)
                 template += store_template.format(store_name=store['name'], store_name_url=urlparse.quote_plus(store['name']), data=source_json)
             template = template if template != "" else "<center><h3>No Stores Found. Read the API to learn how to make them!<h3></center>"
@@ -164,7 +163,7 @@ def edit_store(store_name):
     store_name = urlparse.unquote_plus(store_name)
     try:
         json.loads(args['data'])        # Making sure input is in json format
-        data, NONCE, MAC = encrypt_str(args['data'], app.config['AES_KEY'])
+        data, NONCE, MAC = encrypt_and_encode(args['data'], app.config['AES_KEY'])
     except:
         return redirect(app.config['BASE_URL'] +'/stores?msg=Bad+JSON+Data', 302)
     if session.get('access_token'):
@@ -188,7 +187,7 @@ def create_store():
     args = parser.parse_args()
     try:
         json.loads(args['data'])        # Making sure input is in json format
-        data, NONCE, MAC = encrypt_str(args['data'], app.config['AES_KEY'])
+        data, NONCE, MAC = encrypt_and_encode(args['data'], app.config['AES_KEY'])
     except:
         return redirect(app.config['BASE_URL'] +'/stores?msg=Bad+JSON+Data', 302)
     name = args['store_name'].strip()
@@ -246,7 +245,7 @@ def signup():
         }
         session['access_token'] = access_token
         
-        data, NONCE, MAC = encrypt_str('{ "key" : "value" }', app.config['AES_KEY'])
+        data, NONCE, MAC = encrypt_and_encode('{ "key" : "value" }', app.config['AES_KEY'])
         mongo.db.free_users.insert_one(new_user)
         docinsertion = mongo.db.stores.insert_one({
             "name": create_chain(),
