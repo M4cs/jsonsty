@@ -324,7 +324,7 @@ def account():
     if session.get('access_token'):
         user = mhelp.get_user({'current_token': session.get('access_token')})
         if user:
-            return return render_template('account.html', email=user['email'], store_count=user['store_count'], api_key=user['api_key'], msg=msg, color=color, u_msg=u_msg)
+            return render_template('account.html', email=user['email'], store_count=user['store_count'], api_key=user['api_key'], msg=msg, color=color, u_msg=u_msg)
         else:
             session.clear()
             return redirect(app.config['BASE_URL'] + '/login', 302)
