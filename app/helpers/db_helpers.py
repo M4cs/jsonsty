@@ -2,7 +2,6 @@ from bson import ObjectId
     
 
 def check_email(email):
-    from app import mongo
     from app.models.models import User
     user = User.objects(email=email).first()
     match = False
@@ -22,9 +21,9 @@ def check_token(token):
     return match
 
 def check_api_key(api_key):
-    from app import mongo
-    user = mongo.db.free_users.find_one({'api_key': api_key})
-    if user.get('_id'):
+    from app.models.models import User
+    user = User.objects(api_key= api_key).first()
+    if user:
         return True
     else:
         return False

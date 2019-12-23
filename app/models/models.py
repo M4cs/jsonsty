@@ -17,7 +17,7 @@ class User(mongo.Document):
     
 class Store(mongo.Document):
     meta = { 'collection': 'stores' }
-    name = StringField(unique=True)
+    name = StringField()
     data = StringField()
     owner = StringField()
     
