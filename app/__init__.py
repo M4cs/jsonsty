@@ -27,7 +27,7 @@ with open('.config.json', 'r+') as file:
     app.config['RECAPTCHA_SITE_KEY'] = config['RECAPTCHA_SITE_KEY']
     app.config['RECAPTCHA_SECRET_KEY'] = config['RECAPTCHA_SECRET_KEY']
     app.config['TESTING'] = config['TESTING']
-    if app.config['TESTING'] == 'True':
+    if app.config['TESTING'] == True:
         app.config['MONGODB_SETTINGS'] = {
             'db': 'jsonsty_test',
             'host': config['TEST_MONGO_URI']
