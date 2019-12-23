@@ -2,16 +2,20 @@ import unittest
 from app import app, mongo, mhelp
 from uuid import uuid4
 import json, os
+import urllib.parse as urlparse
 
 class MockUserCreds:
     email = 'test_user{}@example.com'.format(str(uuid4()).split('-')[0][0:4])
     password = str(uuid4())
     api_key = None
     store_template = {
-        'test_key': 'test_value',
-        'test_key_w_sub_dict': {
-            'test_key': ['test_va1', 'test_val2']
-        }
+        'store_name': 'test_store_name',
+        'data': {
+            'test_key': 'test_value',
+            'test_key_w_sub_dict': {
+                'test_key': ['test_va1', 'test_val2']
+                }
+            }
     }
     count = 0
     
@@ -26,8 +30,7 @@ class APITests(unittest.TestCase):
     def setUp(self):
         app.testing = True
         self.app = app.test_client()
-        
-        
+             
     def test_1_signup(self):
         print_title('Testing Signup')
         res = self.app.post('/signup', data={
@@ -46,7 +49,6 @@ class APITests(unittest.TestCase):
             'password': mock_user.password
         })
         data = json.loads(res.data)
-        print(data)
         self.assertTrue(res.status_code, 200)
         self.assertIsNotNone(data['api-key'])
         mock_user.api_key = data['api-key']
@@ -54,10 +56,8 @@ class APITests(unittest.TestCase):
         
     def test_3_get_all_stores(self):
         print_title('Testing Get All Stores')
-        print(mock_user.api_key)
         res = self.app.get('/api_v1/all_stores', headers={'Api-Key': mock_user.api_key})
         data = json.loads(res.data)
-        print(res.data)
         self.assertTrue(res.status_code, 200)
         for store in data['stores']:
             self.assertEqual(store['owner'], mock_user.email)
@@ -74,7 +74,7 @@ class APITests(unittest.TestCase):
         data = json.loads(res.data)
         self.assertTrue(res.status_code, 200)
         self.assertTrue(data['message'] == 'Success')
-        self.assertIsNotNone(data['name'])
+        self.assertEqual(data['name'], mock_user.store_template['store_name'])
         mock_user.count += 1
     
     def test_5_get_all_stores_w_multiple_stores(self):
@@ -92,21 +92,20 @@ class APITests(unittest.TestCase):
         res = self.app.get('/api_v1/all_stores', headers={'Api-Key': mock_user.api_key})
         data = json.loads(res.data)
         store = data['stores'][0]
-        old_data = store['data']
-        new_data = old_data.update({'new_value': 'value11'})
-        res = self.app.put('/api_v1/stores/{}'.format(store['name']), headers={'Api-Key': mock_user.api_key}, data=json.dumps(new_data))
+        new_data = {'key': 'newvalue11'}
+        res = self.app.put('/api_v1/stores/{}'.format(urlparse.quote_plus(store['name'])), headers={'Api-Key': mock_user.api_key}, data=json.dumps(new_data))
         self.assertTrue(res.status_code == 200)
-        res = self.app.get('/api_v1/stores/{}'.format(store['name']), headers={'Api-Key': mock_user.api_key})
-        data = json.loads(res.data)
+        res = self.app.get('/api_v1/stores/{}'.format(urlparse.quote_plus(store['name'])), headers={'Api-Key': mock_user.api_key})
+        store = json.loads(res.data)
         self.assertTrue(res.status_code == 200)
-        self.assertNotEqual(mock_user.store_template, data)
+        self.assertNotEqual(new_data, store['data'])
     
     def test_a1_delete_stores(self):
         print_title('Testing DELETE on Store (Delete)')
         res = self.app.get('/api_v1/all_stores', headers={'Api-Key': mock_user.api_key})
         data = json.loads(res.data)
         for store in data['stores']:
-            res = self.app.delete('/api_v1/stores/{}'.format(store['name']), headers={'Api-Key': mock_user.api_key})
+            res = self.app.delete('/api_v1/stores/{}'.format(urlparse.quote_plus(store['name'])), headers={'Api-Key': mock_user.api_key})
             self.assertTrue(res.status_code == 200)
             self.assertTrue(res.json == { 'message': 'Success' })
             

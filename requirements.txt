@@ -20,6 +20,5 @@ mypy_extensions==0.4.3
 ordereddict==1.1
 toml==0.10.0
 usercustomize==1.0.0
-validate_email==1.3
 wincertstore==0.2
 zipp==0.6.0
