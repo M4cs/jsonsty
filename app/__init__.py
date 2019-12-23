@@ -361,25 +361,22 @@ def change_password():
         args = parser.parse_args()
         if session.get('access_token'):
             user = mhelp.get_user({ 'current_token': session['access_token']})
-            if (user and
-                    check_password_hash(user['password'], args['old_password']) and
+            if not user:
+                session.clear()
+                return redirect(app.config['BASE_URL'] + '/account?msg=Something+broke.+Try+again+later', 302)                
+            if (check_password_hash(user['password'], args['old_password']) and
                     args['new_password'] == args['confirm_password']):
                 new_pw_hash = generate_password_hash(args['new_password'], method="sha256", salt_length=16)
                 mongo.db.free_users.find_one_and_update({'_id': user['_id']}, {'$set': { 'password': new_pw_hash }})
                 return redirect(app.config['BASE_URL'] + '/account?umsg=Password+Changed+Successfully&color=green', 302)
-            elif (not user and
-                    check_password_hash(user['password'], args['old_password']) and
-                    args['new_password'] == args['confirm_password']):
-                session.clear()
-                return redirect(app.config['BASE_URL'] + '/account?msg=Something+broke.+Try+again+later', 302)
-            elif (user and 
-                    not check_password_hash(user['password'], args['old_password']) and 
+            elif (not check_password_hash(user['password'], args['old_password']) and 
                     args['new_password'] == args['confirm_password']):
                 return redirect(app.config['BASE_URL'] + '/account?msg=Incorrect+Password', 302)
-            elif (user and 
-                    check_password_hash(user['password'], args['old_password']) and 
+            elif (check_password_hash(user['password'], args['old_password']) and 
                     not args['new_password'] == args['confirm_password']):
                 return redirect(app.config['BASE_URL'] + '/account?msg=Passwords+do+not+match', 302)
+            else:
+                return redirect(app.config['BASE_URL'] + '/account?msg=Incorrect+Password.+Passwords+do+not+match', 302)
         else:
             return redirect(app.config['BASE_URL'] +'/login')
 
