@@ -3,13 +3,11 @@ from bson import ObjectId
 
 def check_email(email):
     from app import mongo
-    collection = mongo.db.free_users
+    from app.models.models import User
+    user = User.objects(email=email).first()
     match = False
-    for user in collection.find():
-        if user.get('email') == email:
-            match = True
-        else:
-            pass
+    if user:
+        match = True
     return match
 
 def check_token(token):

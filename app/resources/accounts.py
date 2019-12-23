@@ -2,6 +2,7 @@ from flask_restful import Resource, reqparse
 from app.helpers.db_helpers import check_email
 from werkzeug.security import check_password_hash, generate_password_hash
 from app import app, mongo, mhelp, create_chain
+from app.models.models import User
 from uuid import uuid4
 from bson import ObjectId
 from datetime import datetime
@@ -22,10 +23,11 @@ class JSONLogin(Resource):
             return {"error": "No Account with that E-Mail Exists!"}, 403
         else:
             pass
-        user = mhelp.get_user({'email': args['email']})
-        if user and check_password_hash(user.get('password'), args['password']):
+        user = User.objects(email=args['email']).first()
+        if user and check_password_hash(user.password, args['password']):
             access_token = str(uuid4())
-            mongo.db.free_users.find_one_and_update({'email': args['email']}, {'$set': { 'current_token': access_token } })
+            user.current_token = access_token
+            user.save()
             return {"message": "Logged In!", "api-key": user['api_key']}, 200
         elif not user:
             return {"error": "Something broke"}, 500
