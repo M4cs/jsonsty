@@ -17,3 +17,10 @@ def verify_email(email):
 	if len(records) > 0:
 		return True
 	return False
+
+def verify_name(store_name):
+    regex = '<\/?[A-Za-z0-9]{1,}>'
+    if re.search(regex, store_name):
+        return False
+    else:
+        return True

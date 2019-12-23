@@ -6,7 +6,7 @@ from flask_pymongo import PyMongo
 from uuid import uuid4
 from bson import ObjectId
 from app.helpers.db_helpers import check_email, check_token, ModelHelpers
-from app.helpers.email_helper import verify_email
+from app.helpers.input_helpers import verify_email, verify_name
 from app.helpers.crypto_helpers import generate_aes_key, encrypt_and_encode, decode_and_decrypt
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
@@ -80,7 +80,7 @@ def password_parser():
     parser.add_argument('confirm_password')
     return parser
 
-def store_msg_parser():
+def msg_parser():
     parser = reqparse.RequestParser()
     parser.add_argument('msg')
     parser.add_argument('umsg')
@@ -102,7 +102,7 @@ def index():
     
 @app.route('/stores', methods=['GET'])
 def stores():
-    parser = store_msg_parser()
+    parser = msg_parser()
     args = parser.parse_args()
     if args.get('msg'):
         msg = args['msg']
@@ -190,17 +190,22 @@ def create_store():
         data, NONCE, MAC = encrypt_and_encode(args['data'], app.config['AES_KEY'])
     except:
         return redirect(app.config['BASE_URL'] +'/stores?msg=Bad+JSON+Data', 302)
-    name = args['store_name'].strip()
+    store_name = args['store_name'].strip()
+    vresult = verify_name(store_name)
+    if vresult:
+        pass
+    else:
+        return redirect(app.config['BASE_URL'] +'/stores?msg=HTML+Tags+Not+Allowed+in+Name', 302)
     if session.get('access_token'):
         user = mongo.db.free_users.find_one({ 'current_token': session.get('access_token')})
         if user:
-            store = mongo.db.stores.find_one({ 'owner': user['email'], 'name': name})
+            store = mongo.db.stores.find_one({ 'owner': user['email'], 'name': store_name})
             if store:
                return redirect(app.config['BASE_URL'] +'/stores?msg=Name+In+Use+Already', 302)
 
             docinsertion = mongo.db.stores.insert_one({
                 'owner': user['email'],
-                'name': name,
+                'name': store_name,
                 'data': data
             })
             mongo.db.unique_keys.insert_one({
@@ -302,10 +307,24 @@ def login():
         
 @app.route('/account', methods=['GET'])
 def account():
+    parser = msg_parser()
+    args = parser.parse_args()
+    if args.get('msg'):
+        msg = args['msg']
+    else:
+        msg = ''
+    if args.get('color'):
+        color = args['color']
+    else:
+        color = 'red'
+    if args.get('umsg'):
+        u_msg = args['umsg']
+    else:
+        u_msg = ''
     if session.get('access_token'):
         user = mhelp.get_user({'current_token': session.get('access_token')})
         if user:
-            return render_template('account.html', email=user['email'], store_count=user['store_count'], api_key=user['api_key'])
+            return return render_template('account.html', email=user['email'], store_count=user['store_count'], api_key=user['api_key'], msg=msg, color=color, u_msg=u_msg)
         else:
             session.clear()
             return redirect(app.config['BASE_URL'] + '/login', 302)
@@ -347,20 +366,20 @@ def change_password():
                     args['new_password'] == args['confirm_password']):
                 new_pw_hash = generate_password_hash(args['new_password'], method="sha256", salt_length=16)
                 mongo.db.free_users.find_one_and_update({'_id': user['_id']}, {'$set': { 'password': new_pw_hash }})
-                return redirect(app.config['BASE_URL'] +'/account', 302)
+                return redirect(app.config['BASE_URL'] + '/account?umsg=Password+Changed+Successfully&color=green', 302)
             elif (not user and
                     check_password_hash(user['password'], args['old_password']) and
                     args['new_password'] == args['confirm_password']):
                 session.clear()
-                return render_template('login.html', error="Something Broke. Try Again Later."), 200
+                return redirect(app.config['BASE_URL'] + '/account?msg=Something+broke.+Try+again+later', 302)
             elif (user and 
                     not check_password_hash(user['password'], args['old_password']) and 
                     args['new_password'] == args['confirm_password']):
-                return render_template('login.html', error="Incorrect Password!"), 200
+                return redirect(app.config['BASE_URL'] + '/account?msg=Incorrect+Password', 302)
             elif (user and 
                     check_password_hash(user['password'], args['old_password']) and 
                     not args['new_password'] == args['confirm_password']):
-                return render_template('login.html', error="Incorrect Password!"), 200
+                return redirect(app.config['BASE_URL'] + '/account?msg=Passwords+do+not+match', 302)
         else:
             return redirect(app.config['BASE_URL'] +'/login')
 
