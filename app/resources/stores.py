@@ -1,8 +1,9 @@
 from flask_restful import Resource, reqparse
 from flask import request
 from app import app, mongo, mhelp
-from app.models.crypto_helpers import decrypt_str, encrypt_str
+from app.helpers.crypto_helpers import encrypt_and_encode, decode_and_decrypt
 import json
+import urllib.parse as urlparse
 
 def get_parser():
     parser = reqparse.RequestParser()
@@ -21,7 +22,7 @@ class GetAllStores(Resource):
                 encrypted_data = store['data']
                 NONCE = keys['nonce']
                 MAC = keys['mac']
-                store['data'] = decrypt_str(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
+                store['data'] = decode_and_decrypt(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
                 store['_id'] = str(store['_id'])
             return {'stores': stores}, 200
         else:
@@ -30,29 +31,30 @@ class GetAllStores(Resource):
 class SingleStore(Resource):
     def get(self, store_name):
         parser = get_parser()
-        args = parser.parse_args()
-        if request.method == 'GET':
-            user = mhelp.get_user({ 'api_key': args['Api-Key']})
-            store = mhelp.get_single_store({'owner': user['email'], 'name': store_name})
-            if store and user:
-                keys = mongo.db.unique_keys.find_one({'store_id' : store['_id']})
-                encrypted_data = store['data']
-                NONCE = keys['nonce']
-                MAC = keys['mac']
-                store['data'] = decrypt_str(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
-                store['_id'] = str(store['_id'])
-                requested_store = store
-                return requested_store, 200
-            elif not store and user:
-                return { "error": "Store Not Found" }, 404
-            else:
-                return { "error": "Authorization Error. Please Pass Your Valid Access Token!"}, 403
-
+        args = parser.parse_args() 
+        store_name = urlparse.unquote_plus(store_name)
+        user = mhelp.get_user({ 'api_key': args['Api-Key']})
+        store = mhelp.get_single_store({'owner': user['email'], 'name': store_name})
+        if store and user:
+            keys = mongo.db.unique_keys.find_one({'store_id' : store['_id']})
+            encrypted_data = store['data']
+            NONCE = keys['nonce']
+            MAC = keys['mac']
+            store['data'] = decode_and_decrypt(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
+            store['_id'] = str(store['_id'])
+            requested_store = store
+            return requested_store, 200
+        elif not store and user:
+            return { "error": "Store Not Found" }, 404
+        else:
+            return { "error": "Authorization Error. Please Pass Your Valid Access Token!"}, 403
+            
     def put(self, store_name):
         parser = get_parser()
         args = parser.parse_args()
+        store_name = urlparse.unquote_plus(store_name)
         data = json.dumps(request.get_json())
-        data, NONCE, MAC = encrypt_str(data, app.config['AES_KEY'])
+        data, NONCE, MAC = encrypt_and_encode(data, app.config['AES_KEY'])
         user = mhelp.get_user({ 'api_key': args['Api-Key']})
         store = mhelp.get_single_store({'owner': user['email'], 'name': store_name})
         if store and user:
@@ -68,6 +70,7 @@ class SingleStore(Resource):
     def delete(self, store_name):
         parser = get_parser()
         args = parser.parse_args()
+        store_name = urlparse.unquote_plus(store_name)
         user = mhelp.get_user({ 'api_key': args['Api-Key']})
         store = mhelp.get_single_store({'owner': user['email'], 'name': store_name})
         if store and user:
