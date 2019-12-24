@@ -96,7 +96,6 @@ def msg_parser():
 
 @app.route('/', methods=['GET'])
 def index():
-    print('BROKEN')
     if session.get('access_token'):
         user = User.objects(current_token=session.get('access_token')).first()
         if user:
@@ -283,7 +282,6 @@ def signup():
             }
             store = Store(**store_obj).save()
             if store:
-                print('There Was A Store')
                 uk_obj = {
                     'store_id': store.id,
                     'nonce': NONCE,

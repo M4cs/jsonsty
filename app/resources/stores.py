@@ -47,13 +47,9 @@ class SingleStore(Resource):
         store = Store.objects(owner=user.email, name=store_name).first()
         if store and user:
             keys = UniqueKeys.objects(store_id=store.id).first()
-            print(keys.id)
-            print('Got Keys')
             encrypted_data = store.data
-            print(encrypted_data)
             NONCE = keys.nonce
             MAC = keys.mac
-            print('GOT MAC', MAC)
             source_dict = decode_and_decrypt(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
             source_json = json.dumps(source_dict)
             requested_store = source_json
@@ -70,11 +66,8 @@ class SingleStore(Resource):
         data = request.data
         json.loads(request.data)      # Making sure input is in json format
         data, NONCE, MAC = encrypt_and_encode(json.dumps(json.loads(request.data)), app.config['AES_KEY'])
-        print('Got Here')
-        print('data', data)
         user = User.objects(api_key=args['Api-Key']).first()
         store = Store.objects(owner=user.email, name=store_name).first()
-        print('Here')
         if user and store:
             store.data = data
             store.save()
@@ -82,7 +75,6 @@ class SingleStore(Resource):
             if uk_obj:
                 uk_obj.delete()
                 new_uk = UniqueKeys(nonce=NONCE, mac=MAC, store_id=store.id).save()
-                print(new_uk.id)
                 if new_uk:
                     return { "message": "Updated Store." }, 200
             return { "uhoh" : "broken"}, 401
