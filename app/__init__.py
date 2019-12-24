@@ -5,7 +5,6 @@ from jinja2 import Markup, escape
 from flask_mongoengine import MongoEngine
 from uuid import uuid4
 from bson import ObjectId
-from app.helpers.db_helpers import check_email, check_token, ModelHelpers
 from app.helpers.input_helpers import verify_email, verify_name
 from app.helpers.crypto_helpers import generate_aes_key, encrypt_and_encode, decode_and_decrypt
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -48,7 +47,6 @@ with open('.config.json', 'r+') as file:
 mongo = MongoEngine(app)
 
 from app.models.models import User, Store, UniqueKeys
-
 
 words = open('app/templates/words', 'r').readlines()
 
@@ -249,9 +247,9 @@ def signup():
         args = parser.parse_args()
         if not recaptcha.verify():
             return render_template('signup.html', error="ReCaptcha Failed!")
-        result = check_email(args['email'])
+        user = User.objects(email=args['email']).first()
         vresult = verify_email(args['email'])
-        if not result:
+        if not user:
             pass
         else:
             return render_template('signup.html', error="Email In Use!")
