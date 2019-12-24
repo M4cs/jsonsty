@@ -9,9 +9,11 @@ def generate_aes_key():
 
 def encrypt_and_encode(src_str, AES_KEY):
     byte_str = json.dumps(src_str).encode()
+    print(byte_str)
     NONCE = Random.get_random_bytes(AES.block_size-1)
     cipher = AES.new(AES_KEY, AES.MODE_OCB, NONCE)
     ciphertxt, MAC = cipher.encrypt_and_digest(byte_str)
+    print('Hot here')
     return b64encode(ciphertxt).decode(), NONCE.decode('latin-1'), MAC.decode('latin-1')
 
 def decode_and_decrypt(en_str, NONCE, MAC, AES_KEY):

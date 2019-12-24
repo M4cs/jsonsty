@@ -63,17 +63,21 @@ class SingleStore(Resource):
         parser = get_parser()
         args = parser.parse_args()
         store_name = urlparse.unquote_plus(store_name)
-        data = json.dumps(request.get_json())
-        data, NONCE, MAC = encrypt_and_encode(data, app.config['AES_KEY'])
+        data = str(request.get_json())
+        try:
+            json.loads(data)      # Making sure input is in json format
+            data, NONCE, MAC = encrypt_and_encode(data, app.config['AES_KEY'])
+        except:
+            return { "message": "Bad JSON Format" }, 401
         user = User.objects(api_key=args['Api-Key']).first()
         store = Store.objects(owner=user.email, name=store_name).first()
-        if store and user:
-            uk_obj = UniqueKeys(store_id=store.id, nonce=NONCE, mac=MAC).save()
-            if uk_obj:
-                store_ids = [store.id for store in Store.objects(owner=user.email).all()]
-                user.store_count += 1
-                user.stores = store_ids
-                user.save()
+        if user and store:
+            store.data = data
+            store.save()
+            uk_obj = UniqueKeys.objects(store_id=store.id).first()
+            uk_obj.nonce = NONCE
+            uk_obj.mac = MAC
+            uk_obj.save()
             return { "message": "Updated Store." }, 200
         elif not store and user:
             return { "error": "Store Not Found" }, 404

@@ -96,6 +96,7 @@ def msg_parser():
 
 @app.route('/', methods=['GET'])
 def index():
+    print('BROKEN')
     if session.get('access_token'):
         user = User.objects(current_token=session.get('access_token')).first()
         if user:
@@ -174,7 +175,7 @@ def edit_store(store_name):
     args = parser.parse_args()
     store_name = urlparse.unquote_plus(store_name)
     try:
-        json.loads(args['data'])        # Making sure input is in json format
+        json.loads(args['data'])      # Making sure input is in json format
         data, NONCE, MAC = encrypt_and_encode(args['data'], app.config['AES_KEY'])
     except:
         return redirect(app.config['BASE_URL'] +'/stores?msg=Bad+JSON+Data', 302)
