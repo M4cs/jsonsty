@@ -3,3 +3,4 @@
 jsonsty.egg-info
 .env
 .vscode
+.flaskapp

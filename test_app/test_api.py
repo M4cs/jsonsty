@@ -1,5 +1,6 @@
 import unittest
-from app import app, mongo, mhelp
+from app import app, mongo
+from app.models.models import User
 from uuid import uuid4
 import json, os
 import urllib.parse as urlparse
@@ -92,11 +93,12 @@ class APITests(unittest.TestCase):
         res = self.app.get('/api_v1/all_stores', headers={'Api-Key': mock_user.api_key})
         data = json.loads(res.data)
         store = data['stores'][0]
-        new_data = {'key': 'newvalue11'}
-        res = self.app.put('/api_v1/stores/{}'.format(urlparse.quote_plus(store['name'])), headers={'Api-Key': mock_user.api_key}, data=json.dumps(new_data))
+        new_data = {"key": "new_value"}
+        res = self.app.put('/api_v1/stores/{}'.format(urlparse.quote_plus(store['name'])), headers={'Api-Key': mock_user.api_key, 'Content-Type': 'application/json'}, data=json.dumps({"new": "key"}))
         self.assertTrue(res.status_code == 200)
         res = self.app.get('/api_v1/stores/{}'.format(urlparse.quote_plus(store['name'])), headers={'Api-Key': mock_user.api_key})
         store = json.loads(res.data)
+        print(store)
         self.assertTrue(res.status_code == 200)
         self.assertNotEqual(new_data, store['data'])
     
@@ -105,13 +107,14 @@ class APITests(unittest.TestCase):
         res = self.app.get('/api_v1/all_stores', headers={'Api-Key': mock_user.api_key})
         data = json.loads(res.data)
         for store in data['stores']:
+            print(store)
             res = self.app.delete('/api_v1/stores/{}'.format(urlparse.quote_plus(store['name'])), headers={'Api-Key': mock_user.api_key})
             self.assertTrue(res.status_code == 200)
             self.assertTrue(res.json == { 'message': 'Success' })
             
     def test_a2_clean_up(self):
         print_title('Cleaning Up Database')
-        mongo.db.free_users.find_one_and_delete({'email': mock_user.email})
+        user = User.objects(email=mock_user.email).delete()
 
 if __name__ == "__main__":
     unittest.main()            

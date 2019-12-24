@@ -2,14 +2,11 @@ from bson import ObjectId
     
 
 def check_email(email):
-    from app import mongo
-    collection = mongo.db.free_users
+    from app.models.models import User
+    user = User.objects(email=email).first()
     match = False
-    for user in collection.find():
-        if user.get('email') == email:
-            match = True
-        else:
-            pass
+    if user:
+        match = True
     return match
 
 def check_token(token):
@@ -24,9 +21,9 @@ def check_token(token):
     return match
 
 def check_api_key(api_key):
-    from app import mongo
-    user = mongo.db.free_users.find_one({'api_key': api_key})
-    if user.get('_id'):
+    from app.models.models import User
+    user = User.objects(api_key= api_key).first()
+    if user:
         return True
     else:
         return False

@@ -85,22 +85,22 @@
     </table>
     <p class="has-line-data" data-line-start="24" data-line-end="25"><strong>Example Request:</strong></p>
     <pre><code class="has-line-data" data-line-start="27" data-line-end="39">
-      &gt;&gt; import requests
-      &gt;&gt; import urllib.parse as urlparse
-      &gt;&gt; store_template = {
-        'store_name': 'store_name',
-        'data': { 'key' : 'value' }
-      }
-      &gt;&gt; res = requests.post(
-      'https://json.psty.io/api_v1/create',
-      headers={
-      'Api-Key': 'API_KEY_HERE',
-      'Content-Type': 'application/json'
-      },
-      data=json.dumps(store_template)
-      )
-      &gt;&gt; print(res.content)
-      { "message": "Success", "name": "store_name" }
+&gt;&gt; import requests
+&gt;&gt; import urllib.parse as urlparse
+&gt;&gt; store_template = {
+  'store_name': 'store_name',
+  'data': { 'key' : 'value' }
+}
+&gt;&gt; res = requests.post(
+'https://json.psty.io/api_v1/create',
+headers={
+'Api-Key': 'API_KEY_HERE',
+'Content-Type': 'application/json'
+},
+data=json.dumps(store_template)
+)
+&gt;&gt; print(res.content)
+{ "message": "Success", "name": "store_name" }
 </code></pre>
     <h1 class="code-line" data-line-start="40" data-line-end="41"><a id="Updating_A_Store_40"></a>Updating A Store</h1>
     <p class="has-line-data" data-line-start="42" data-line-end="43"><strong>URL:</strong>
@@ -128,19 +128,19 @@
     </table>
     <p class="has-line-data" data-line-start="52" data-line-end="53"><strong>Example Request:</strong></p>
     <pre><code class="has-line-data" data-line-start="55" data-line-end="67">
-      &gt;&gt; import requests
-      &gt;&gt; import urllib.parse as urlparse
-      &gt;&gt; store_name = 'store_name'
-      &gt;&gt; res = requests.put(
-          'https://json.psty.io/api_v1/stores/{}'.format(urlparse.quote_plus(store_name)),
-          headers={
-          'Api-Key': 'API_KEY_HERE',
-          'Content-Type': 'application/json'
-          },
-          data=json.dumps({'key': 'value'})
-      )
-      &gt;&gt; print(res.content)
-      { "message": "Updated Store" }
+&gt;&gt; import requests
+&gt;&gt; import urllib.parse as urlparse
+&gt;&gt; store_name = 'store_name'
+&gt;&gt; res = requests.put(
+    'https://json.psty.io/api_v1/stores/{}'.format(urlparse.quote_plus(store_name)),
+    headers={
+    'Api-Key': 'API_KEY_HERE',
+    'Content-Type': 'application/json'
+    },
+    data=json.dumps({'key': 'value'})
+)
+&gt;&gt; print(res.content)
+{ "message": "Updated Store" }
 </code></pre>
     <h1 class="code-line" data-line-start="68" data-line-end="69"><a id="Deleting_A_Store_68"></a>Deleting A Store</h1>
     <p class="has-line-data" data-line-start="70" data-line-end="71"><strong>URL:</strong>
@@ -149,18 +149,18 @@
     </p>
     <p class="has-line-data" data-line-start="74" data-line-end="75"><strong>Example Request:</strong></p>
     <pre><code class="has-line-data" data-line-start="77" data-line-end="88">
-      &gt;&gt; import requests
-      &gt;&gt; import urllib.parse as urlparse
-      &gt;&gt; store_name = 'store_name'
-      &gt;&gt; res = requests.delete(
-      'https://json.psty.io/api_v1/stores/{}'.format(urlparse.quote_plus(store_name)),
-      headers={
-      'Api-Key': 'API_KEY_HERE',
-      'Content-Type': 'application/json'
-      }
-      )
-      &gt;&gt; print(res.content)
-      { "message": "Deleted Store" }
+&gt;&gt; import requests
+&gt;&gt; import urllib.parse as urlparse
+&gt;&gt; store_name = 'store_name'
+&gt;&gt; res = requests.delete(
+'https://json.psty.io/api_v1/stores/{}'.format(urlparse.quote_plus(store_name)),
+headers={
+'Api-Key': 'API_KEY_HERE',
+'Content-Type': 'application/json'
+}
+)
+&gt;&gt; print(res.content)
+{ "message": "Deleted Store" }
 </code></pre>
     <h1 class="code-line" data-line-start="89" data-line-end="90"><a id="Getting_All_Stores_89"></a>Getting All Stores
     </h1>
@@ -169,33 +169,33 @@
     <p class="has-line-data" data-line-start="93" data-line-end="94"><strong>Request Type:</strong> <code>GET</code></p>
     <p class="has-line-data" data-line-start="95" data-line-end="96"><strong>Example Request:</strong></p>
     <pre><code class="has-line-data" data-line-start="98" data-line-end="126">
-    &gt;&gt; import requests
-    &gt;&gt; headers = { 'Api-Key': 'API_KEY_HERE' }
-    &gt;&gt; res = requests.get('https://json.psty.io/api_v1/all_stores', headers={'Api-Key': mock_user.api_key})
-    &gt;&gt; print(res.json)
+&gt;&gt; import requests
+&gt;&gt; headers = { 'Api-Key': 'API_KEY_HERE' }
+&gt;&gt; res = requests.get('https://json.psty.io/api_v1/all_stores', headers={'Api-Key': mock_user.api_key})
+&gt;&gt; print(res.json)
+{
+  "stores": [
     {
-      "stores": [
-        {
-          "_id": "5df486f92766fa2af193e148",
-          "data": {},
-          "name": "bcda975c-bb4b-4b12-ac51-be52b1e9934d",
-          "owner": "test@example.com"
-        },
-        {
-          "_id": "5df487587605c3bac616ed55",
-          "data": {
-            "test_data": {
-              "test_array": [
-                "test_val1",
-                "test_val2"
-              ]
-            }
-          },
-          "name": "13d2708d-2506-4ab2-a958-0d7cde506147",
-          "owner": "test@example.com"
+      "_id": "5df486f92766fa2af193e148",
+      "data": {},
+      "name": "bcda975c-bb4b-4b12-ac51-be52b1e9934d",
+      "owner": "test@example.com"
+    },
+    {
+      "_id": "5df487587605c3bac616ed55",
+      "data": {
+        "test_data": {
+          "test_array": [
+            "test_val1",
+            "test_val2"
+          ]
         }
-      ]
+      },
+      "name": "13d2708d-2506-4ab2-a958-0d7cde506147",
+      "owner": "test@example.com"
     }
+  ]
+}
 </code></pre>
 
 </body>
