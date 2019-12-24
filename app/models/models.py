@@ -20,6 +20,14 @@ class Store(mongo.Document):
     name = StringField()
     data = StringField()
     owner = StringField()
+
+    def to_json(self, data):
+        return {
+            'id': str(self.id),
+            'name': self.name,
+            'owner': self.owner,
+            'data': data
+        }
     
 class UniqueKeys(mongo.Document):
     meta = { 'collection': 'unique_keys' }

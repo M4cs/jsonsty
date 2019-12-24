@@ -2,7 +2,6 @@ from flask import Flask, jsonify, session, request, redirect, render_template, s
 from flask_recaptcha import ReCaptcha
 from flask_restful import reqparse, Api
 from jinja2 import Markup, escape
-from flask_pymongo import PyMongo
 from flask_mongoengine import MongoEngine
 from uuid import uuid4
 from bson import ObjectId
@@ -50,7 +49,6 @@ mongo = MongoEngine(app)
 
 from app.models.models import User, Store, UniqueKeys
 
-mhelp = ModelHelpers()
 
 words = open('app/templates/words', 'r').readlines()
 

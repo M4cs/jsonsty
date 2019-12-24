@@ -1,0 +1,23 @@
+Metadata-Version: 2.0
+Name: usercustomize
+Version: 1.0.0
+Summary: User customization
+Home-page: UNKNOWN
+Author: usercustomize team
+Author-email: UNKNOWN
+License: MIT
+Keywords: usercustomize
+Platform: POSIX
+Platform: Windows
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Provides: usercustomize
+
+usercustomize
+=============
+
+A generic preference saving/restoring module
+
+
