@@ -94,12 +94,11 @@ class APITests(unittest.TestCase):
         data = json.loads(res.data)
         store = data['stores'][0]
         new_data = {"key": "new_value"}
-        res = self.app.put('/api_v1/stores/{}'.format(urlparse.quote_plus(store['name'])), headers={'Api-Key': mock_user.api_key, 'content-type': 'application/json'}, data=json.dumps(new_data))
-        print(res.status_code)
-        print(res.data)
+        res = self.app.put('/api_v1/stores/{}'.format(urlparse.quote_plus(store['name'])), headers={'Api-Key': mock_user.api_key, 'Content-Type': 'application/json'}, data=json.dumps({"new": "key"}))
         self.assertTrue(res.status_code == 200)
-        res = self.app.get('/api_v1/stores/{}'.format(urlparse.quote_plus(store['name'])), headers={'Api-Key': mock_user.api_key, 'content-type': 'application/json'})
+        res = self.app.get('/api_v1/stores/{}'.format(urlparse.quote_plus(store['name'])), headers={'Api-Key': mock_user.api_key})
         store = json.loads(res.data)
+        print(store)
         self.assertTrue(res.status_code == 200)
         self.assertNotEqual(new_data, store['data'])
     
