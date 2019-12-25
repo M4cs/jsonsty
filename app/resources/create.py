@@ -1,7 +1,6 @@
 from flask_restful import Resource, reqparse
 from app import app, mongo, create_chain
 from app.models.models import User, Store, UniqueKeys
-from app.helpers.db_helpers import check_token, check_api_key
 from app.helpers.crypto_helpers import encrypt_and_encode
 from app.helpers.input_helpers import verify_name
 from uuid import uuid4
@@ -21,7 +20,8 @@ class CreateStore(Resource):
         store_template = json.loads(request.data)
         data = json.dumps(store_template['data'])
         store_name = store_template['store_name'].strip()
-        if check_api_key(args['Api-Key']):
+        user = User.objects(api_key=args['Api-Key']).first()
+        if user:
             pass
         else:
             print('Failed')
@@ -30,8 +30,7 @@ class CreateStore(Resource):
         if vresult:
             pass
         else:
-            return {"error": "Store name not allowed"}, 403
-        user = User.objects(api_key=args['Api-Key']).first()
+            return {"error": "Store name not allowed"}, 403     
         if user.store_count == 100:
             return {"error": "Reached 100 store maximum!"}, 403
         else:

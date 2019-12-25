@@ -27,11 +27,10 @@ class GetAllStores(Resource):
                     NONCE = keys[0].nonce
                     MAC = keys[0].mac
                     source_dict = decode_and_decrypt(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
-                    source_json = json.dumps(source_dict)
                     store_dict['id'] = str(store_obj.id)
                     store_dict['name'] = store_obj.name
                     store_dict['owner'] = user.email
-                    store_dict['data'] = source_json
+                    store_dict['data'] = source_dict
                 stores.append(store_dict)
             print({'stores': stores})
             return {'stores': stores}, 200
@@ -51,8 +50,7 @@ class SingleStore(Resource):
             NONCE = keys.nonce
             MAC = keys.mac
             source_dict = decode_and_decrypt(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
-            source_json = json.dumps(source_dict)
-            requested_store = source_json
+            requested_store = source_dict
             return {"data": requested_store, "id": str(store.id), "name": store.name, "owner": store.owner}, 200
         elif not store and user:
             return { "error": "Store Not Found" }, 404
@@ -64,7 +62,10 @@ class SingleStore(Resource):
         args = parser.parse_args()
         store_name = urlparse.unquote_plus(store_name)
         data = request.data
-        json.loads(request.data)      # Making sure input is in json format
+        try:
+            json.loads(request.data)      # Making sure input is in json format
+        except:
+            return { "error" : "Bad JSON Data"}, 422
         data, NONCE, MAC = encrypt_and_encode(json.dumps(json.loads(request.data)), app.config['AES_KEY'])
         user = User.objects(api_key=args['Api-Key']).first()
         store = Store.objects(owner=user.email, name=store_name).first()
