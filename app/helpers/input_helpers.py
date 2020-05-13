@@ -14,6 +14,8 @@ def verify_email(email):
 			records.append(x)
 	except dns.resolver.NoAnswer:
 		return False
+	except dns.resolver.NXDOMAIN:
+		return False
 	if len(records) > 0:
 		return True
 	return False

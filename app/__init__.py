@@ -2,10 +2,9 @@ from flask import Flask, jsonify, session, request, redirect, render_template, s
 from flask_recaptcha import ReCaptcha
 from flask_restful import reqparse, Api
 from jinja2 import Markup, escape
-from flask_pymongo import PyMongo
+from flask_mongoengine import MongoEngine
 from uuid import uuid4
 from bson import ObjectId
-from app.helpers.db_helpers import check_email, check_token, ModelHelpers
 from app.helpers.input_helpers import verify_email, verify_name
 from app.helpers.crypto_helpers import generate_aes_key, encrypt_and_encode, decode_and_decrypt
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -26,11 +25,17 @@ with open('.config.json', 'r+') as file:
     app.config['RECAPTCHA_SITE_KEY'] = config['RECAPTCHA_SITE_KEY']
     app.config['RECAPTCHA_SECRET_KEY'] = config['RECAPTCHA_SECRET_KEY']
     app.config['TESTING'] = config['TESTING']
-    if app.config['TESTING'] == 'True':
-        app.config['MONGO_URI'] = config['TEST_MONGO_URI']
+    if app.config['TESTING'] == True:
+        app.config['MONGODB_SETTINGS'] = {
+            'db': 'jsonsty_test',
+            'host': config['TEST_MONGO_URI']
+        }
         app.config['BASE_URL'] = config['BASE_URL_TEST']
     else:
-        app.config['MONGO_URI'] = config['MONGO_URI']
+        app.config['MONGODB_SETTINGS'] = {
+            'db': 'jsonsty_test',
+            'host': config['MONGO_URI']
+        }
         app.config['BASE_URL'] = config['BASE_URL']
     app.config['SECRET_KEY'] = config['SECRET_KEY']
     if 'AES_KEY' not in config or config['AES_KEY'] == '':
@@ -39,9 +44,9 @@ with open('.config.json', 'r+') as file:
         json.dump(config, file, indent = 4)
     app.config['AES_KEY'] = str(config['AES_KEY']).encode('latin-1')
 
-mongo = PyMongo(app)
+mongo = MongoEngine(app)
 
-mhelp = ModelHelpers()
+from app.models.models import User, Store, UniqueKeys
 
 words = open('app/templates/words', 'r').readlines()
 
@@ -90,14 +95,14 @@ def msg_parser():
 @app.route('/', methods=['GET'])
 def index():
     if session.get('access_token'):
-        user = mongo.db.free_users.find_one({'current_token': session.get('access_token')})
+        user = User.objects(current_token=session.get('access_token')).first()
         if user:
             return redirect(app.config['BASE_URL'] +'/stores', 302)
         else:
             session.clear()
             return redirect(app.config['BASE_URL'] + '/', 302)
     else:
-        number = mongo.db.free_users.count()
+        number = len(User.objects().all())
         return render_template('index.html', number=number), 200
     
 @app.route('/stores', methods=['GET'])
@@ -117,38 +122,43 @@ def stores():
     else:
         u_msg = ''
     if session.get('access_token'):
-        user = mongo.db.free_users.find_one({'current_token': session.get('access_token')})
+        user = User.objects(current_token=session.get('access_token')).first()
         if user:
             template = ""
-            for store in user['stores']:
-                store = mongo.db.stores.find_one({'_id': store})
-                keys = mongo.db.unique_keys.find_one({'store_id' : store['_id']})
-                encrypted_data = store['data']
-                NONCE = keys['nonce']
-                MAC = keys['mac']
-                source_dict = decode_and_decrypt(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
-                source_json = json.dumps(source_dict)
-                template += store_template.format(store_name=store['name'], store_name_url=urlparse.quote_plus(store['name']), data=source_json)
+            for store in user.stores:
+                store_obj = Store.objects(id=store).first()
+                keys = UniqueKeys.objects(store_id=store).all()
+                if len(keys) == 1:
+                    encrypted_data = store_obj.data
+                    NONCE = keys[0].nonce
+                    MAC = keys[0].mac
+                    source_dict = decode_and_decrypt(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
+                    source_json = json.dumps(source_dict)
+                    template += store_template.format(store_name=store_obj.name, store_name_url=urlparse.quote_plus(store_obj.name), data=source_json)
             template = template if template != "" else "<center><h3>No Stores Found. Read the API to learn how to make them!<h3></center>"
             return render_template('stores.html', stores=template, msg=msg, color=color, u_msg=u_msg)
         else:
             session.clear()
             return redirect(app.config['BASE_URL'] +'/login', 302)
+    return redirect(app.config['BASE_URL'] + '/', 302)
 
 @app.route('/stores/<store_name>/delete', methods=['GET'])
 def del_store(store_name):
     store_name = urlparse.unquote_plus(store_name)
     if session.get('access_token'):
-        user = mongo.db.free_users.find_one({ 'current_token': session.get('access_token')})
+        user = User.objects(current_token= session.get('access_token')).first()
         if user:
-            store = mhelp.get_single_store({'owner': user['email'], 'name': store_name})
+            store = Store.objects(owner=user.email, name=store_name).first()
             if not store:
                return redirect(app.config['BASE_URL'] +'/stores', 302)
 
-            mongo.db.stores.find_one_and_delete({'_id': store['_id']})
-            mongo.db.unique_keys.find_one_and_delete({'store_id': store['_id']})
-            store_ids = [store for store in mhelp.get_store_ids({'owner': user['email']})]
-            mongo.db.free_users.find_one_and_update({'_id': user['_id']}, { '$set': { 'store_count': user['store_count'] - 1, 'stores': store_ids}})
+            store.delete()
+            uk_obj = UniqueKeys.objects(store_id=store.id).first()
+            uk_obj.delete()
+            store_ids = [store.id for store in Store.objects(owner=user.email).all()]
+            user.store_count -= 1
+            user.stores = store_ids
+            user.save()
             return redirect(app.config['BASE_URL'] +'/stores?umsg=Store+Deleted+Successfully&color=green', 302)
         else:
             session.clear()
@@ -162,17 +172,20 @@ def edit_store(store_name):
     args = parser.parse_args()
     store_name = urlparse.unquote_plus(store_name)
     try:
-        json.loads(args['data'])        # Making sure input is in json format
+        json.loads(args['data'])      # Making sure input is in json format
         data, NONCE, MAC = encrypt_and_encode(args['data'], app.config['AES_KEY'])
     except:
         return redirect(app.config['BASE_URL'] +'/stores?msg=Bad+JSON+Data', 302)
     if session.get('access_token'):
-        user = mongo.db.free_users.find_one({ 'current_token': session.get('access_token')})
-        store = mhelp.get_single_store({'owner': user['email'], 'name': store_name})
+        user = User.objects(current_token=session.get('access_token')).first()
+        store = Store.objects(owner=user.email, name=store_name).first()
         if user and store:
-            mongo.db.stores.find_one_and_update({'_id': store['_id']}, {'$set': { 'data': data}})
-            mongo.db.unique_keys.find_one_and_update({'store_id': store['_id']}, {'$set': { 'nonce': NONCE}})
-            mongo.db.unique_keys.find_one_and_update({'store_id': store['_id']}, {'$set': { 'mac': MAC}})
+            store.data = data
+            store.save()
+            uk_obj = UniqueKeys.objects(store_id=store.id).first()
+            uk_obj.nonce = NONCE
+            uk_obj.mac = MAC
+            uk_obj.save()
             return redirect(app.config['BASE_URL'] +'/stores?umsg=Store+Updated&color=green', 302)
         elif not store and user:
             return redirect(app.config['BASE_URL'] +'/stores', 302)
@@ -197,25 +210,31 @@ def create_store():
     else:
         return redirect(app.config['BASE_URL'] +'/stores?msg=HTML+Tags+Not+Allowed+in+Name', 302)
     if session.get('access_token'):
-        user = mongo.db.free_users.find_one({ 'current_token': session.get('access_token')})
+        user = User.objects(current_token=session.get('access_token')).first()
         if user:
-            store = mongo.db.stores.find_one({ 'owner': user['email'], 'name': store_name})
+            store = Store.objects(owner=user.email, name=store_name).first()
             if store:
                return redirect(app.config['BASE_URL'] +'/stores?msg=Name+In+Use+Already', 302)
 
-            docinsertion = mongo.db.stores.insert_one({
+            store_obj = {
                 'owner': user['email'],
                 'name': store_name,
                 'data': data
-            })
-            mongo.db.unique_keys.insert_one({
-                'store_id': docinsertion.inserted_id,
-                'nonce': NONCE,
-                'mac' : MAC
-            })
-            stores = mhelp.get_store_ids({ 'owner': user['email']})
-            mongo.db.free_users.find_one_and_update({ '_id': user['_id']}, { '$set': { 'store_count': user['store_count'] + 1, 'stores': stores}})
-            return redirect(app.config['BASE_URL'] +'/stores?umsg=Store+Created+Successfully&color=green', 302)
+            }
+            store = Store(**store_obj).save()
+            if store:
+                uk_obj = {
+                    'store_id': store.id,
+                    'nonce': NONCE,
+                    'mac' : MAC
+                }
+                uk = UniqueKeys(**uk_obj).save()
+                store_ids = [store.id for store in Store.objects(owner=user.email).all()]
+                user.store_count += 1
+                user.stores = store_ids
+                user.save()
+                return redirect(app.config['BASE_URL'] +'/stores?umsg=Store+Created+Successfully&color=green', 302)
+            return redirect(app.config['BASE_URL'] + '/stores?umsg=Store+Creation+Failure&color=red', 302)
         else:
             session.clear()
     else:
@@ -228,9 +247,9 @@ def signup():
         args = parser.parse_args()
         if not recaptcha.verify():
             return render_template('signup.html', error="ReCaptcha Failed!")
-        result = check_email(args['email'])
+        user = User.objects(email=args['email']).first()
         vresult = verify_email(args['email'])
-        if not result:
+        if not user:
             pass
         else:
             return render_template('signup.html', error="Email In Use!")
@@ -246,47 +265,52 @@ def signup():
             "date_created": datetime.now(),
             "store_count": 1,
             "current_token": access_token,
-            "api_key": str(uuid4())
+            "api_key": str(uuid4()),
+            "account_type": "Free"
         }
-        session['access_token'] = access_token
+        new = User(**new_user).save()
+        if new:
+            session['access_token'] = access_token
         
-        data, NONCE, MAC = encrypt_and_encode('{ "key" : "value" }', app.config['AES_KEY'])
-        mongo.db.free_users.insert_one(new_user)
-        docinsertion = mongo.db.stores.insert_one({
-            "name": create_chain(),
-            "owner": new_user['email'],
-            "data": data
-        })
-        mongo.db.unique_keys.insert_one({
-            'store_id': docinsertion.inserted_id,
-            'nonce': NONCE,
-            'mac' : MAC
-        })
-        stores = []
-        for store in mongo.db.stores.find():
-            if store.get('owner') == new_user['email']:
-                stores.append(ObjectId(store.get('_id')))
-        mongo.db.free_users.find_one_and_update({'email': new_user['email']}, {'$set': { 'stores': stores }})
-        
-        return redirect(app.config['BASE_URL'] + '/stores', 302)
+            data, NONCE, MAC = encrypt_and_encode('{ "key" : "value" }', app.config['AES_KEY'])
+            store_obj = {
+                "name": create_chain(),
+                "owner": new_user['email'],
+                "data": data
+            }
+            store = Store(**store_obj).save()
+            if store:
+                uk_obj = {
+                    'store_id': store.id,
+                    'nonce': NONCE,
+                    'mac' : MAC
+                }
+                unique_keys = UniqueKeys(**uk_obj)
+                unique_keys.save()
+                stores = []
+                for store in Store.objects(owner=new.email).all():
+                    stores.append(ObjectId(store.id))
+                new.stores = stores
+                new.save()
+                return redirect(app.config['BASE_URL'] + '/stores', 302)
     elif request.method == "GET":
         return render_template('signup.html'), 200
+    return render_template('signup.html'), 200
     
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         parser = signup_parser()
         args = parser.parse_args()
-        user = mhelp.get_user({'email': args['email']})
+        user = User.objects(email=args['email']).first()
         if not user:
             return render_template('login.html', error="E-Mail Not In Use!")
         else:
             pass
-        user = mhelp.get_user({'email': args['email']})
-        if user and check_password_hash(user.get('password'), args['password']):
+        if user and check_password_hash(user.password, args['password']):
             access_token = str(uuid4())
-            user.pop('current_token')
-            mongo.db.free_users.find_one_and_update({'email': args['email']}, {'$set': { 'current_token': access_token } })
+            user.current_token = access_token
+            user.save()
             session['access_token'] = access_token
             return redirect(app.config['BASE_URL'] +'/stores', 302)
         elif not user:
@@ -296,7 +320,7 @@ def login():
             return render_template('login.html', error="Incorrect Password!"), 200
     elif request.method == 'GET':
         if session.get('access_token'):
-            user = mhelp.get_user({'current_token': session.get('access_token')})
+            user = User.objects(current_token=session['access_token']).first()
             if user:
                 return redirect(app.config['BASE_URL'] +'/stores', 302)
             else:
@@ -322,9 +346,9 @@ def account():
     else:
         u_msg = ''
     if session.get('access_token'):
-        user = mhelp.get_user({'current_token': session.get('access_token')})
+        user = User.objects(current_token=session.get('access_token')).first()
         if user:
-            return render_template('account.html', email=user['email'], store_count=user['store_count'], api_key=user['api_key'], msg=msg, color=color, u_msg=u_msg)
+            return render_template('account.html', email=user.email, store_count=user['store_count'], api_key=user['api_key'], msg=msg, color=color, u_msg=u_msg, type=user.account_type)
         else:
             session.clear()
             return redirect(app.config['BASE_URL'] + '/login', 302)
@@ -334,18 +358,20 @@ def account():
 @app.route('/regen_api', methods=['GET'])
 def regen_api():
     if request.method == 'GET':
-        user = mhelp.get_user({'current_token': session['access_token']})
+        user = User.objects(current_token=session.get('access_token')).first()
         if user:
-            mongo.db.free_users.find_one_and_update({'_id': user['_id']}, { '$set': { 'api_key': str(uuid4()) }})
+            user.api_key = str(uuid4())
+            user.save()
             return redirect(app.config['BASE_URL'] +'/account', 302)
         
 @app.route('/logout', methods=['GET'])
 def logout():
     if request.method == 'GET':
         if session.get('access_token'):
-            user = mhelp.get_user({ 'current_token': session['access_token']})
+            user = User.objects(current_token=session['access_token']).first()
             if user:
-                mongo.db.free_users.find_one_and_update({ '_id': user['_id']}, {'$set': {'current_token': ''}})
+                user.current_token = ''
+                user.save()
                 session.clear()
                 return redirect(app.config['BASE_URL'] +'/', 302)
             else:
@@ -360,19 +386,20 @@ def change_password():
         parser = password_parser()
         args = parser.parse_args()
         if session.get('access_token'):
-            user = mhelp.get_user({ 'current_token': session['access_token']})
+            user = User.objects(current_token=session['access_token']).first()
             if not user:
                 session.clear()
                 return redirect(app.config['BASE_URL'] + '/account?msg=Something+broke.+Try+again+later', 302)                
-            if (check_password_hash(user['password'], args['old_password']) and
+            if (check_password_hash(user.password, args['old_password']) and
                     args['new_password'] == args['confirm_password']):
                 new_pw_hash = generate_password_hash(args['new_password'], method="sha256", salt_length=16)
-                mongo.db.free_users.find_one_and_update({'_id': user['_id']}, {'$set': { 'password': new_pw_hash }})
+                user.password = new_pw_hash
+                user.save()
                 return redirect(app.config['BASE_URL'] + '/account?umsg=Password+Changed+Successfully&color=green', 302)
-            elif (not check_password_hash(user['password'], args['old_password']) and 
+            elif (not check_password_hash(user.password, args['old_password']) and 
                     args['new_password'] == args['confirm_password']):
                 return redirect(app.config['BASE_URL'] + '/account?msg=Incorrect+Password', 302)
-            elif (check_password_hash(user['password'], args['old_password']) and 
+            elif (check_password_hash(user.password, args['old_password']) and 
                     not args['new_password'] == args['confirm_password']):
                 return redirect(app.config['BASE_URL'] + '/account?msg=Passwords+do+not+match', 302)
             else:
@@ -384,7 +411,7 @@ def change_password():
 def docs():
     signup = """<a href="/signup" style="display: inline-block;"><button type="submit" class="button">Signup</button></a>"""
     if session.get('access_token'):
-        user = mhelp.get_user({'current_token': session['access_token']})
+        user = User.objects(current_token=session['access_token']).first()
         if user:
             signup = ""
         else:

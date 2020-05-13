@@ -1,7 +1,8 @@
 from flask_restful import Resource, reqparse
 from flask import request
-from app import app, mongo, mhelp
+from app import app, mongo
 from app.helpers.crypto_helpers import encrypt_and_encode, decode_and_decrypt
+from app.models.models import UniqueKeys, User, Store
 import json
 import urllib.parse as urlparse
 
@@ -14,16 +15,24 @@ class GetAllStores(Resource):
     def get(self):
         parser = get_parser()
         args = parser.parse_args()
-        user = mhelp.get_user({ 'api_key': args['Api-Key']})
+        user = User.objects(api_key=args['Api-Key']).first()
         if user:
-            stores = mhelp.get_stores({'owner': user['email']})
-            for store in stores:
-                keys = mongo.db.unique_keys.find_one({'store_id' : store['_id']})
-                encrypted_data = store['data']
-                NONCE = keys['nonce']
-                MAC = keys['mac']
-                store['data'] = decode_and_decrypt(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
-                store['_id'] = str(store['_id'])
+            stores = []
+            for store in user.stores:
+                store_dict = {}
+                store_obj = Store.objects(id=store).first()
+                keys = UniqueKeys.objects(store_id=store).all()
+                if len(keys) == 1:
+                    encrypted_data = store_obj.data
+                    NONCE = keys[0].nonce
+                    MAC = keys[0].mac
+                    source_dict = decode_and_decrypt(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
+                    store_dict['id'] = str(store_obj.id)
+                    store_dict['name'] = store_obj.name
+                    store_dict['owner'] = user.email
+                    store_dict['data'] = source_dict
+                stores.append(store_dict)
+            print({'stores': stores})
             return {'stores': stores}, 200
         else:
             return { "error": "You must authorize first. Please login or signup."}, 403
@@ -33,17 +42,16 @@ class SingleStore(Resource):
         parser = get_parser()
         args = parser.parse_args() 
         store_name = urlparse.unquote_plus(store_name)
-        user = mhelp.get_user({ 'api_key': args['Api-Key']})
-        store = mhelp.get_single_store({'owner': user['email'], 'name': store_name})
+        user = User.objects(api_key=args['Api-Key']).first()
+        store = Store.objects(owner=user.email, name=store_name).first()
         if store and user:
-            keys = mongo.db.unique_keys.find_one({'store_id' : store['_id']})
-            encrypted_data = store['data']
-            NONCE = keys['nonce']
-            MAC = keys['mac']
-            store['data'] = decode_and_decrypt(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
-            store['_id'] = str(store['_id'])
-            requested_store = store
-            return requested_store, 200
+            keys = UniqueKeys.objects(store_id=store.id).first()
+            encrypted_data = store.data
+            NONCE = keys.nonce
+            MAC = keys.mac
+            source_dict = decode_and_decrypt(encrypted_data, NONCE, MAC, app.config['AES_KEY'])
+            requested_store = source_dict
+            return {"data": requested_store, "id": str(store.id), "name": store.name, "owner": store.owner}, 200
         elif not store and user:
             return { "error": "Store Not Found" }, 404
         else:
@@ -53,15 +61,24 @@ class SingleStore(Resource):
         parser = get_parser()
         args = parser.parse_args()
         store_name = urlparse.unquote_plus(store_name)
-        data = json.dumps(request.get_json())
-        data, NONCE, MAC = encrypt_and_encode(data, app.config['AES_KEY'])
-        user = mhelp.get_user({ 'api_key': args['Api-Key']})
-        store = mhelp.get_single_store({'owner': user['email'], 'name': store_name})
-        if store and user:
-            mongo.db.unique_keys.find_one_and_update({'store_id': store['_id']}, {'$set': { 'nonce': NONCE}})
-            mongo.db.unique_keys.find_one_and_update({'store_id': store['_id']}, {'$set': { 'mac': MAC}})
-            mongo.db.stores.find_one_and_update({'owner': user['email'], 'name': store_name}, {'$set': {'data': data}})
-            return { "message": "Updated Store." }, 200
+        data = request.data
+        try:
+            json.loads(request.data)      # Making sure input is in json format
+        except:
+            return { "error" : "Bad JSON Data"}, 422
+        data, NONCE, MAC = encrypt_and_encode(json.dumps(json.loads(request.data)), app.config['AES_KEY'])
+        user = User.objects(api_key=args['Api-Key']).first()
+        store = Store.objects(owner=user.email, name=store_name).first()
+        if user and store:
+            store.data = data
+            store.save()
+            uk_obj = UniqueKeys.objects(store_id=store.id).first()
+            if uk_obj:
+                uk_obj.delete()
+                new_uk = UniqueKeys(nonce=NONCE, mac=MAC, store_id=store.id).save()
+                if new_uk:
+                    return { "message": "Updated Store." }, 200
+            return { "uhoh" : "broken"}, 401
         elif not store and user:
             return { "error": "Store Not Found" }, 404
         else:
@@ -71,13 +88,16 @@ class SingleStore(Resource):
         parser = get_parser()
         args = parser.parse_args()
         store_name = urlparse.unquote_plus(store_name)
-        user = mhelp.get_user({ 'api_key': args['Api-Key']})
-        store = mhelp.get_single_store({'owner': user['email'], 'name': store_name})
+        user = User.objects(api_key=args['Api-Key']).first()
+        store = Store.objects(owner=user.email, name=store_name).first()
         if store and user:
-            mongo.db.stores.find_one_and_delete({'_id': store['_id']})
-            mongo.db.unique_keys.find_one_and_delete({'store_id': store['_id']})
-            old_stores = mhelp.get_store_ids({'owner': user['email']})
-            mongo.db.free_users.find_one_and_update({'email': user['email'] }, { '$set': {'stores': old_stores, 'store_count': user['store_count'] - 1}})
+            uk = UniqueKeys.objects(store_id=store.id).first()
+            uk.delete()
+            store.delete()
+            store_ids = [store.id for store in Store.objects(owner=user.email).all()]
+            user.store_count -= 1
+            user.stores = store_ids
+            user.save()
             return { 'message': 'Success' }, 200
         elif not store and user:
             return { "error": "Store Not Found" }, 404
